@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YT-DLP Audio Downloader</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #2a2a3a;
+    --accent: #00e5a0;
+    --accent2: #7c3aed;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --danger: #ff4444;
+    --warning: #ffaa00;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    position: relative;
+    padding: 40px 0;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(124,58,237,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 80% 80%, rgba(0,229,160,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== APP SCREEN ===== */
+  .app-screen {
+    display: none;
+    width: 100%;
+    max-width: 800px;
+    padding: 20px;
+    position: relative;
+    z-index: 10;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+
+  .app-header .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mini-logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .app-header h1 {
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .yt-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 7px 14px 7px 10px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    transition: border-color 0.3s, color 0.3s;
+  }
+
+  .yt-status-badge.logged-in {
+    border-color: rgba(255, 0, 0, 0.4);
+    color: var(--text);
+    background: rgba(255, 0, 0, 0.06);
+  }
+
+  .yt-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s, box-shadow 0.3s;
+    flex-shrink: 0;
+  }
+
+  .yt-status-badge.logged-in .yt-status-dot {
+    background: #ff4444;
+    box-shadow: 0 0 6px #ff4444;
+    animation: pulse-red 2s infinite;
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 4px #ff4444; }
+    50% { box-shadow: 0 0 10px #ff4444; }
+  }
+
+  .yt-status-icon {
+    font-size: 11px;
+    color: #ff4444;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+  }
+
+  .yt-status-badge.logged-in .yt-status-icon { opacity: 1; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .url-input-wrap {
+    display: flex;
+    gap: 10px;
+  }
+
+  .url-input-wrap input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Space Mono', monospace;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .url-input-wrap input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,160,0.12);
+  }
+
+  .url-input-wrap input::placeholder { color: var(--muted); }
+
+  .btn-run {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 10px;
+    padding: 12px 22px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+
+  .btn-run:hover { opacity: 0.88; }
+
+  /* ===== PILL SELECTOR ===== */
+  .pill-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+
+  .pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+  }
+
+  .pill.active-purple {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #fff;
+  }
+
+  /* ===== SLIDER ===== */
+  .slider-wrap {
+    position: relative;
+  }
+
+  .slider-track {
+    position: relative;
+    height: 6px;
+    background: var(--border);
+    border-radius: 100px;
+    margin: 10px 0 6px;
+  }
+
+  .slider-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 100px;
+    transition: width 0.15s;
+    pointer-events: none;
+  }
+
+  input[type="range"] {
+    position: absolute;
+    top: -7px;
+    left: 0;
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+    transition: transform 0.15s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-top: 4px;
+  }
+
+  .slider-value {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+
+  /* ===== SECTION LABEL ===== */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 10px;
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .option-item label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .option-item select, .option-item input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .option-item select:focus,
+  .option-item input:focus {
+    border-color: var(--accent);
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 4px;
+  }
+
+  /* ===== FORMAT CARD ===== */
+  .format-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 10px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+    gap: 6px;
+  }
+
+  .format-card:hover { border-color: var(--accent); }
+
+  .format-card.active {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.07);
+  }
+
+  .format-card .fmt-icon { font-size: 22px; }
+
+  .format-card .fmt-name {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    color: var(--text);
+  }
+
+  .format-card .fmt-desc {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    line-height: 1.4;
+  }
+
+  .format-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  /* ===== PRESETS ===== */
+  .preset-btn {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: left;
+  }
+
+  .preset-btn:hover { border-color: var(--accent2); color: var(--accent); }
+
+  .preset-btn .preset-name { font-size: 13px; margin-bottom: 3px; }
+  .preset-btn .preset-desc { font-size: 10px; color: var(--muted); }
+
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toggle-row:last-child { border-bottom: none; }
+
+  .toggle-label {
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .toggle-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-top: 2px;
+  }
+
+  .toggle {
+    width: 44px;
+    height: 24px;
+    background: var(--border);
+    border-radius: 100px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle.on { background: var(--accent); }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  .toggle.on::after { transform: translateX(20px); }
+
+  .command-preview {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 160px;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+
+  .status-dot.ready { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    color: var(--muted);
+  }
+
+  .tab.active {
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .cookie-method-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .cmethod {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.18s;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    position: relative;
+  }
+
+  .cmethod:hover { border-color: var(--accent); color: var(--text); }
+
+  .cmethod.active {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.07);
+    color: var(--text);
+  }
+
+  .cmethod-icon { font-size: 16px; }
+  .cmethod-label { font-family: 'Syne', sans-serif; }
+
+  .cmethod-badge {
+    background: var(--accent);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 100px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .browser-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+
+  .browser-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 6px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.18s;
+    gap: 6px;
+  }
+
+  .browser-card:hover { border-color: var(--accent); }
+
+  .browser-card.active {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.07);
+  }
+
+  .br-icon { font-size: 20px; }
+
+  .br-name {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+  }
+
+  .browser-card.active .br-name { color: var(--accent); }
+
+  .btn-test-login {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    background: var(--bg);
+    border: 1.5px solid var(--accent2);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-test-login:hover {
+    background: rgba(124,58,237,0.1);
+    border-color: var(--accent);
+  }
+
+  .btn-test-login:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .test-result-box {
+    margin-top: 12px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .test-log {
+    background: #0d0d14;
+    padding: 12px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+    min-height: 40px;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  .test-log .log-line { display: block; }
+
+  .test-result {
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .test-result .result-main { font-size: 15px; }
+  .test-result .result-detail {
+    font-size: 11px;
+    font-weight: 400;
+    font-family: 'Space Mono', monospace;
+    opacity: 0.8;
+  }
+
+  .test-result.status-premium {
+    background: rgba(0,229,160,0.08);
+    border-top: 1px solid rgba(0,229,160,0.2);
+    color: var(--accent);
+  }
+
+  .test-result.status-logged_in {
+    background: rgba(0,180,255,0.08);
+    border-top: 1px solid rgba(0,180,255,0.2);
+    color: #00b4ff;
+  }
+
+  .test-result.status-not_logged_in,
+  .test-result.status-cookie_error,
+  .test-result.status-error {
+    background: rgba(255,68,68,0.08);
+    border-top: 1px solid rgba(255,68,68,0.2);
+    color: #ff6666;
+  }
+
+  .test-result.status-timeout {
+    background: rgba(255,170,0,0.08);
+    border-top: 1px solid rgba(255,170,0,0.2);
+    color: var(--warning);
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinning { display: inline-block; animation: spin 1s linear infinite; }
+
+  .cookie-note {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(124,58,237,0.08);
+    border: 1px solid rgba(124,58,237,0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    line-height: 1.6;
+  }
+
+  .cookie-note strong { color: var(--accent); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- APP SCREEN -->
+<div class="app-screen" id="appScreen" style="display:block;">
+  <div class="app-header">
+    <div class="brand">
+      <div class="mini-logo">🎵</div>
+      <h1>YT-DLP Downloader</h1>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <!-- YouTube login status badge -->
+      <div class="yt-status-badge" id="ytStatusBadge">
+        <span class="yt-status-dot" id="ytStatusDot"></span>
+        <span class="yt-status-icon">▶</span>
+        <span id="ytStatusText">YouTube: 未ログイン</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('download')">ダウンロード</div>
+    <div class="tab" onclick="switchTab('command')">コマンド確認</div>
+  </div>
+
+  <!-- DOWNLOAD TAB -->
+  <div class="tab-content active" id="tab-download">
+    <div class="card">
+      <div class="card-title">📎 YouTube URL</div>
+      <div class="url-input-wrap">
+        <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=... または playlist URL"
+          value="https://www.youtube.com/watch?v=ju9W47AL3Lw&list=PLg3Q8w2gsKyAqs_YuYaLj7mPwZFHB9D5Z">
+        <button class="btn-run" onclick="generateCommand(); switchTab('command')">生成 ▶</button>
+      </div>
+    </div>
+
+    <!-- PRESETS -->
+    <div class="card">
+      <div class="card-title">⚡ プリセット</div>
+      <div class="preset-grid">
+        <button class="preset-btn" onclick="applyPreset('hifi')">
+          <div class="preset-name">🎼 Hi-Fi</div>
+          <div class="preset-desc">FLAC / 最高音質<br>ロスレス</div>
+        </button>
+        <button class="preset-btn" onclick="applyPreset('standard')">
+          <div class="preset-name">🎵 Standard</div>
+          <div class="preset-desc">MP3 / 320K<br>汎用性重視</div>
+        </button>
+        <button class="preset-btn" onclick="applyPreset('podcast')">
+          <div class="preset-name">🎙 Podcast</div>
+          <div class="preset-desc">MP3 / 128K<br>軽量・省容量</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- FORMAT -->
+    <div class="card">
+      <div class="card-title">🎵 音声フォーマット</div>
+      <div class="format-grid">
+        <div class="format-card active" id="fmt-mp3" onclick="selectFormat('mp3')">
+          <div class="fmt-icon">🎸</div>
+          <div class="fmt-name">MP3</div>
+          <div class="fmt-desc">互換性最高<br>汎用</div>
+        </div>
+        <div class="format-card" id="fmt-flac" onclick="selectFormat('flac')">
+          <div class="fmt-icon">💿</div>
+          <div class="fmt-name">FLAC</div>
+          <div class="fmt-desc">ロスレス<br>高音質</div>
+        </div>
+        <div class="format-card" id="fmt-m4a" onclick="selectFormat('m4a')">
+          <div class="fmt-icon">🍎</div>
+          <div class="fmt-name">M4A</div>
+          <div class="fmt-desc">Apple向け<br>AAC</div>
+        </div>
+        <div class="format-card" id="fmt-opus" onclick="selectFormat('opus')">
+          <div class="fmt-icon">🔊</div>
+          <div class="fmt-name">OPUS</div>
+          <div class="fmt-desc">高効率<br>小サイズ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUALITY -->
+    <div class="card">
+      <div class="card-title">📊 音質 (ビットレート)</div>
+
+      <div class="section-label">プリセット音質</div>
+      <div class="pill-group" id="qualityPills">
+        <div class="pill" onclick="selectQualityPill(this,'96K')">96K</div>
+        <div class="pill" onclick="selectQualityPill(this,'128K')">128K</div>
+        <div class="pill" onclick="selectQualityPill(this,'192K')">192K</div>
+        <div class="pill" onclick="selectQualityPill(this,'256K')">256K</div>
+        <div class="pill active" onclick="selectQualityPill(this,'320K')">320K ⭐</div>
+      </div>
+
+      <div class="section-label">カスタムビットレート</div>
+      <div class="slider-wrap">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:13px; color:var(--muted); font-family:'Space Mono',monospace;">ビットレート</span>
+          <span class="slider-value" id="qualityDisplay">320K</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-fill" id="qualityFill" style="width:100%"></div>
+          <input type="range" id="qualitySlider" min="0" max="4" value="4" step="1"
+            oninput="onQualitySlider(this.value)">
+        </div>
+        <div class="slider-labels">
+          <span>96K</span><span>128K</span><span>192K</span><span>256K</span><span>320K</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADVANCED OPTIONS -->
+    <div class="card">
+      <div class="card-title">⚙ 詳細設定</div>
+
+      <div class="section-label">🍪 Cookie 取得方法</div>
+
+      <!-- Cookie method selector -->
+      <div class="cookie-method-tabs">
+        <div class="cmethod active" id="cm-browser" onclick="selectCookieMethod('browser')">
+          <span class="cmethod-icon">🌐</span>
+          <span class="cmethod-label">ブラウザから自動取得</span>
+          <span class="cmethod-badge">推奨</span>
+        </div>
+        <div class="cmethod" id="cm-file" onclick="selectCookieMethod('file')">
+          <span class="cmethod-icon">📄</span>
+          <span class="cmethod-label">cookies.txt を指定</span>
+        </div>
+        <div class="cmethod" id="cm-none" onclick="selectCookieMethod('none')">
+          <span class="cmethod-icon">🚫</span>
+          <span class="cmethod-label">なし</span>
+        </div>
+      </div>
+
+      <!-- Browser selector -->
+      <div id="cookie-browser-section">
+        <div style="margin-top:14px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:10px;">使用するブラウザ</div>
+          <div class="browser-grid">
+            <div class="browser-card active" id="br-chrome" onclick="selectBrowser('chrome')">
+              <div class="br-icon">🟡</div>
+              <div class="br-name">Chrome</div>
+            </div>
+            <div class="browser-card" id="br-firefox" onclick="selectBrowser('firefox')">
+              <div class="br-icon">🦊</div>
+              <div class="br-name">Firefox</div>
+            </div>
+            <div class="browser-card" id="br-safari" onclick="selectBrowser('safari')">
+              <div class="br-icon">🧭</div>
+              <div class="br-name">Safari</div>
+            </div>
+            <div class="browser-card" id="br-edge" onclick="selectBrowser('edge')">
+              <div class="br-icon">🔷</div>
+              <div class="br-name">Edge</div>
+            </div>
+            <div class="browser-card" id="br-brave" onclick="selectBrowser('brave')">
+              <div class="br-icon">🦁</div>
+              <div class="br-name">Brave</div>
+            </div>
+            <div class="browser-card" id="br-opera" onclick="selectBrowser('opera')">
+              <div class="br-icon">🅾</div>
+              <div class="br-name">Opera</div>
+            </div>
+          </div>
+          <div class="cookie-note">
+            💡 YouTubeにログイン済みの状態でブラウザを<strong>閉じてから</strong>コマンドを実行してください
+          </div>
+
+          <!-- Login Test UI -->
+          <div style="margin-top:16px;">
+            <button class="btn-test-login" id="btnTestLogin" onclick="testYouTubeLogin()">
+              <span id="testBtnIcon">🔍</span>
+              <span id="testBtnText">YouTubeログイン状態をテスト</span>
+            </button>
+
+            <div class="test-result-box" id="testResultBox" style="display:none;">
+              <div class="test-log" id="testLog"></div>
+              <div class="test-result" id="testResult" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- File path input -->
+      <div id="cookie-file-section" style="display:none; margin-top:14px;">
+        <div class="option-item">
+          <label>cookies.txt パス</label>
+          <input type="text" id="cookies" value="~/Desktop/cookies.txt" oninput="generateCommand()">
+        </div>
+        <div class="cookie-note" style="margin-top:10px;">
+          💡 ブラウザ拡張 <strong>「Get cookies.txt LOCALLY」</strong> でエクスポートできます
+        </div>
+      </div>
+
+      <div class="options-grid" style="margin-top:18px;">
+        <div class="option-item">
+          <label>アーカイブファイル</label>
+          <input type="text" id="archive" value="~/yt-dlp-archive.txt" oninput="generateCommand()">
+        </div>
+        <div class="option-item" style="grid-column:1/-1;">
+          <label>出力テンプレート</label>
+          <input type="text" id="output" value="%(playlist)s/%(playlist_index)03d - %(title)s.%(ext)s" oninput="generateCommand()">
+        </div>
+      </div>
+
+      <div class="section-label">オプション</div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">メタデータ埋め込み</div>
+          <div class="toggle-sub">--embed-metadata --add-metadata</div>
+        </div>
+        <div class="toggle on" id="t-metadata" onclick="toggleSwitch('t-metadata')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">サムネイル埋め込み</div>
+          <div class="toggle-sub">--embed-thumbnail</div>
+        </div>
+        <div class="toggle on" id="t-thumb" onclick="toggleSwitch('t-thumb')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">ダウンロード履歴管理</div>
+          <div class="toggle-sub">--download-archive（重複スキップ）</div>
+        </div>
+        <div class="toggle on" id="t-archive" onclick="toggleSwitch('t-archive')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">再生リストのみダウンロード</div>
+          <div class="toggle-sub">--yes-playlist</div>
+        </div>
+        <div class="toggle" id="t-playlist" onclick="toggleSwitch('t-playlist')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">エラー時スキップ</div>
+          <div class="toggle-sub">--ignore-errors</div>
+        </div>
+        <div class="toggle" id="t-ignore" onclick="toggleSwitch('t-ignore')"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMAND TAB -->
+  <div class="tab-content" id="tab-command">
+    <div class="card">
+      <div class="card-title">💻 生成されたコマンド</div>
+      <div style="position: relative;">
+        <div class="command-preview" id="commandPreview">URLを入力してコマンドを生成してください</div>
+        <button class="copy-btn" onclick="copyCommand()">コピー</button>
+      </div>
+      <div class="status-bar">
+        <div class="status-dot ready"></div>
+        <span>コマンド生成済み — ターミナルにペーストして実行できます</span>
+      </div>
+    </div>
+
+    <div class="card" style="border-color: rgba(255,170,0,0.2);">
+      <div class="card-title">⚠ 注意事項</div>
+      <p style="font-size: 13px; color: var(--muted); line-height: 1.7; font-family: 'Space Mono', monospace;">
+        • cookies.txt は YouTube の認証に必要です<br>
+        • ダウンロード済みURLはアーカイブで管理されます<br>
+        • 著作権法に従いご利用ください<br>
+        • yt-dlp は事前にインストールが必要です
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== TABS =====
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['download','command'][i] === name));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'command') generateCommand();
+}
+
+// ===== TOGGLES =====
+function toggleSwitch(id) {
+  document.getElementById(id).classList.toggle('on');
+  generateCommand();
+}
+function isOn(id) { return document.getElementById(id).classList.contains('on'); }
+
+// ===== FORMAT =====
+let selectedFormat = 'mp3';
+function selectFormat(fmt) {
+  selectedFormat = fmt;
+  document.querySelectorAll('.format-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('fmt-' + fmt).classList.add('active');
+  // FLAC doesn't support bitrate — grey out slider
+  const isLossless = fmt === 'flac';
+  document.getElementById('qualitySlider').disabled = isLossless;
+  document.getElementById('qualityFill').style.opacity = isLossless ? '0.3' : '1';
+  generateCommand();
+}
+
+// ===== QUALITY =====
+const qualityValues = ['96K','128K','192K','256K','320K'];
+let selectedQuality = '320K';
+
+function selectQualityPill(el, val) {
+  selectedQuality = val;
+  document.querySelectorAll('#qualityPills .pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  // sync slider
+  const idx = qualityValues.indexOf(val);
+  if (idx >= 0) {
+    document.getElementById('qualitySlider').value = idx;
+    updateSliderFill(idx);
+  }
+  document.getElementById('qualityDisplay').textContent = val;
+  generateCommand();
+}
+
+function onQualitySlider(val) {
+  const q = qualityValues[val];
+  selectedQuality = q;
+  document.getElementById('qualityDisplay').textContent = q;
+  updateSliderFill(val);
+  // sync pills
+  document.querySelectorAll('#qualityPills .pill').forEach((p,i) => {
+    p.classList.toggle('active', i === parseInt(val));
+  });
+  generateCommand();
+}
+
+function updateSliderFill(idx) {
+  const pct = (idx / 4) * 100;
+  document.getElementById('qualityFill').style.width = pct + '%';
+}
+
+// ===== PRESETS =====
+function applyPreset(name) {
+  const presets = {
+    hifi:     { format:'flac', quality:'320K' },
+    standard: { format:'mp3',  quality:'320K' },
+    podcast:  { format:'mp3',  quality:'128K' }
+  };
+  const p = presets[name];
+  selectFormat(p.format);
+  const idx = qualityValues.indexOf(p.quality);
+  document.getElementById('qualitySlider').value = idx;
+  onQualitySlider(idx);
+  // flash feedback
+  document.querySelectorAll('.preset-btn').forEach(b => b.style.borderColor = '');
+  event.currentTarget.style.borderColor = 'var(--accent)';
+  setTimeout(() => event.currentTarget.style.borderColor = '', 800);
+}
+
+// ===== COOKIE METHOD =====
+let cookieMethod = 'browser'; // 'browser' | 'file' | 'none'
+let selectedBrowser = 'chrome';
+
+function selectCookieMethod(method) {
+  cookieMethod = method;
+  document.querySelectorAll('.cmethod').forEach(el => el.classList.remove('active'));
+  document.getElementById('cm-' + method).classList.add('active');
+  document.getElementById('cookie-browser-section').style.display = method === 'browser' ? 'block' : 'none';
+  document.getElementById('cookie-file-section').style.display = method === 'file' ? 'block' : 'none';
+  updateYtStatus();
+  generateCommand();
+}
+
+function selectBrowser(br) {
+  selectedBrowser = br;
+  document.querySelectorAll('.browser-card').forEach(el => el.classList.remove('active'));
+  document.getElementById('br-' + br).classList.add('active');
+  updateYtStatus();
+  generateCommand();
+}
+
+// ===== YOUTUBE LOGIN TEST =====
+const SERVER = 'http://127.0.0.1:5000';
+
+async function testYouTubeLogin() {
+  const btn = document.getElementById('btnTestLogin');
+  const icon = document.getElementById('testBtnIcon');
+  const text = document.getElementById('testBtnText');
+  const box = document.getElementById('testResultBox');
+  const log = document.getElementById('testLog');
+  const result = document.getElementById('testResult');
+
+  // リセット
+  btn.disabled = true;
+  icon.className = 'spinning';
+  icon.textContent = '⟳';
+  text.textContent = 'テスト中...';
+  box.style.display = 'block';
+  log.innerHTML = '';
+  result.style.display = 'none';
+  result.className = 'test-result';
+
+  // サーバー疎通確認
+  try {
+    const check = await fetch(`${SERVER}/api/check-ytdlp`, { signal: AbortSignal.timeout(3000) });
+    const checkData = await check.json();
+    if (!checkData.ok) {
+      showTestError(log, result, btn, icon, text, '⚠️ サーバーエラー', checkData.error);
+      return;
+    }
+    addLog(log, `✅ yt-dlp ${checkData.version} を検出`);
+  } catch (e) {
+    showTestError(log, result, btn, icon, text,
+      '🔌 サーバーに接続できません',
+      'server.py が起動していません。ターミナルで python3 server.py を実行してください。'
+    );
+    return;
+  }
+
+  // URLパラメータ組み立て
+  const params = new URLSearchParams({ method: cookieMethod, browser: selectedBrowser });
+  if (cookieMethod === 'file') {
+    const cookiePath = document.getElementById('cookies')?.value?.trim() || '';
+    params.set('cookiefile', cookiePath);
+  }
+  const ytUrl = document.getElementById('ytUrl').value.trim();
+  if (ytUrl) params.set('url', ytUrl);
+
+  // SSEで結果受信
+  const evtSource = new EventSource(`${SERVER}/api/test-login?${params}`);
+
+  evtSource.addEventListener('log', e => {
+    const data = JSON.parse(e.data);
+    addLog(log, data.message);
+  });
+
+  evtSource.addEventListener('result', e => {
+    const data = JSON.parse(e.data);
+    evtSource.close();
+
+    result.style.display = 'flex';
+    result.className = `test-result status-${data.status}`;
+    result.innerHTML = `
+      <div class="result-main">${data.message}</div>
+      ${data.detail ? `<div class="result-detail">${data.detail}</div>` : ''}
+    `;
+
+    // ヘッダーのYouTubeステータスも更新
+    const badge = document.getElementById('ytStatusBadge');
+    const statusText = document.getElementById('ytStatusText');
+    if (data.status === 'premium') {
+      badge.classList.add('logged-in');
+      statusText.textContent = `YouTube Premium: ${browserLabels[selectedBrowser] || 'Cookie'} でログイン済み`;
+    } else if (data.status === 'logged_in') {
+      badge.classList.add('logged-in');
+      statusText.textContent = `YouTube: ${browserLabels[selectedBrowser] || 'Cookie'} でログイン済み`;
+    } else {
+      badge.classList.remove('logged-in');
+      statusText.textContent = 'YouTube: 未ログイン / Cookie無効';
+    }
+
+    resetBtn(btn, icon, text);
+  });
+
+  evtSource.addEventListener('error', e => {
+    try {
+      const data = JSON.parse(e.data);
+      showTestError(log, result, btn, icon, text, '❌ エラー', data.message);
+    } catch {
+      showTestError(log, result, btn, icon, text, '❌ 接続エラー', 'サーバーとの通信が切断されました');
+    }
+    evtSource.close();
+  });
+}
+
+function addLog(container, msg) {
+  const line = document.createElement('span');
+  line.className = 'log-line';
+  line.textContent = msg;
+  container.appendChild(line);
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTestError(log, result, btn, icon, text, title, detail) {
+  addLog(log, title);
+  result.style.display = 'flex';
+  result.className = 'test-result status-error';
+  result.innerHTML = `<div class="result-main">${title}</div><div class="result-detail">${detail}</div>`;
+  resetBtn(btn, icon, text);
+}
+
+function resetBtn(btn, icon, text) {
+  btn.disabled = false;
+  icon.className = '';
+  icon.textContent = '🔍';
+  text.textContent = 'YouTubeログイン状態をテスト';
+}
+
+
+const browserLabels = {
+  chrome: 'Chrome', firefox: 'Firefox', safari: 'Safari',
+  edge: 'Edge', brave: 'Brave', opera: 'Opera'
+};
+
+function updateYtStatus() {
+  const badge = document.getElementById('ytStatusBadge');
+  const text = document.getElementById('ytStatusText');
+
+  if (cookieMethod === 'browser') {
+    badge.classList.add('logged-in');
+    text.textContent = `YouTube: ${browserLabels[selectedBrowser]} のアカウントを使用`;
+  } else if (cookieMethod === 'file') {
+    badge.classList.add('logged-in');
+    text.textContent = 'YouTube: cookies.txt でログイン';
+  } else {
+    badge.classList.remove('logged-in');
+    text.textContent = 'YouTube: 未ログイン';
+  }
+}
+
+
+function generateCommand() {
+  const url = document.getElementById('ytUrl').value.trim() || 'YOUR_URL_HERE';
+  const archive = document.getElementById('archive').value.trim();
+  const output = document.getElementById('output').value.trim();
+
+  let cmd = 'yt-dlp';
+
+  // Cookie handling
+  if (cookieMethod === 'browser') {
+    cmd += ` \\\n  --cookies-from-browser ${selectedBrowser}`;
+  } else if (cookieMethod === 'file') {
+    const cookiePath = document.getElementById('cookies') ? document.getElementById('cookies').value.trim() : '';
+    if (cookiePath) cmd += ` \\\n  --cookies ${cookiePath}`;
+  }
+
+  cmd += ' \\\n  -f bestaudio';
+  cmd += ' \\\n  --extract-audio';
+  cmd += ` \\\n  --audio-format ${selectedFormat}`;
+  if (selectedFormat !== 'flac') cmd += ` \\\n  --audio-quality ${selectedQuality}`;
+  if (output) cmd += ` \\\n  -o "${output}"`;
+  if (isOn('t-metadata')) cmd += ' \\\n  --embed-metadata \\\n  --add-metadata';
+  if (isOn('t-thumb')) cmd += ' \\\n  --embed-thumbnail';
+  if (isOn('t-archive') && archive) cmd += ` \\\n  --download-archive ${archive}`;
+  if (isOn('t-playlist')) cmd += ' \\\n  --yes-playlist';
+  if (isOn('t-ignore')) cmd += ' \\\n  --ignore-errors';
+  cmd += ` \\\n  "${url}"`;
+
+  document.getElementById('commandPreview').textContent = cmd;
+}
+
+function copyCommand() {
+  const text = document.getElementById('commandPreview').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✓ コピー済';
+    btn.style.color = 'var(--accent)';
+    setTimeout(() => { btn.textContent = 'コピー'; btn.style.color = ''; }, 2000);
+  });
+}
+
+document.getElementById('ytUrl').addEventListener('input', generateCommand);
+
+// 初期化
+updateYtStatus();
+generateCommand();
+</script>
+</body>
+</html>
