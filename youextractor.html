@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -19,766 +18,853 @@
     --warning: #ffaa00;
   }
 
-- { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-background: var(–bg);
-color: var(–text);
-font-family: ‘Syne’, sans-serif;
-min-height: 100vh;
-display: flex;
-align-items: flex-start;
-justify-content: center;
-overflow-y: auto;
-position: relative;
-padding: 40px 0;
-}
-
-body::before {
-content: ‘’;
-position: fixed;
-inset: 0;
-background:
-radial-gradient(ellipse 60% 50% at 20% 20%, rgba(124,58,237,0.12) 0%, transparent 70%),
-radial-gradient(ellipse 50% 60% at 80% 80%, rgba(0,229,160,0.08) 0%, transparent 70%);
-pointer-events: none;
-}
-
-.grid-bg {
-position: fixed;
-inset: 0;
-background-image:
-linear-gradient(var(–border) 1px, transparent 1px),
-linear-gradient(90deg, var(–border) 1px, transparent 1px);
-background-size: 40px 40px;
-opacity: 0.3;
-pointer-events: none;
-}
-
-@keyframes fadeIn {
-from { opacity: 0; transform: translateY(20px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-/* ===== APP SCREEN ===== */
-.app-screen {
-display: none;
-width: 100%;
-max-width: 800px;
-padding: 20px;
-position: relative;
-z-index: 10;
-animation: fadeIn 0.6s ease;
-}
-
-.app-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
-margin-bottom: 32px;
-}
-
-.app-header .brand {
-display: flex;
-align-items: center;
-gap: 12px;
-}
-
-.mini-logo {
-width: 40px;
-height: 40px;
-background: linear-gradient(135deg, var(–accent2), var(–accent));
-border-radius: 10px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 18px;
-}
-
-.app-header h1 {
-font-size: 22px;
-font-weight: 800;
-}
-
-.yt-status-badge {
-display: flex;
-align-items: center;
-gap: 7px;
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 100px;
-padding: 7px 14px 7px 10px;
-font-size: 12px;
-font-family: ‘Space Mono’, monospace;
-color: var(–muted);
-transition: border-color 0.3s, color 0.3s;
-}
-
-.yt-status-badge.logged-in {
-border-color: rgba(255, 0, 0, 0.4);
-color: var(–text);
-background: rgba(255, 0, 0, 0.06);
-}
-
-.yt-status-dot {
-width: 7px;
-height: 7px;
-border-radius: 50%;
-background: var(–muted);
-transition: background 0.3s, box-shadow 0.3s;
-flex-shrink: 0;
-}
-
-.yt-status-badge.logged-in .yt-status-dot {
-background: #ff4444;
-box-shadow: 0 0 6px #ff4444;
-animation: pulse-red 2s infinite;
-}
-
-@keyframes pulse-red {
-0%, 100% { box-shadow: 0 0 4px #ff4444; }
-50% { box-shadow: 0 0 10px #ff4444; }
-}
-
-.yt-status-icon {
-font-size: 11px;
-color: #ff4444;
-opacity: 0.5;
-transition: opacity 0.3s;
-}
-
-.yt-status-badge.logged-in .yt-status-icon { opacity: 1; }
-
-.card {
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 20px;
-padding: 28px;
-margin-bottom: 20px;
-position: relative;
-overflow: hidden;
-}
-
-.card-title {
-font-size: 12px;
-font-weight: 700;
-letter-spacing: 1.5px;
-text-transform: uppercase;
-color: var(–muted);
-margin-bottom: 16px;
-font-family: ‘Space Mono’, monospace;
-}
-
-.url-input-wrap {
-display: flex;
-gap: 10px;
-}
-
-.url-input-wrap input {
-flex: 1;
-background: var(–bg);
-border: 1px solid var(–border);
-border-radius: 10px;
-padding: 12px 16px;
-color: var(–text);
-font-size: 14px;
-font-family: ‘Space Mono’, monospace;
-outline: none;
-transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.url-input-wrap input:focus {
-border-color: var(–accent);
-box-shadow: 0 0 0 3px rgba(0,229,160,0.12);
-}
-
-.url-input-wrap input::placeholder { color: var(–muted); }
-
-.btn-run {
-background: linear-gradient(135deg, var(–accent2), var(–accent));
-border: none;
-border-radius: 10px;
-padding: 12px 22px;
-color: #fff;
-font-size: 14px;
-font-weight: 700;
-font-family: ‘Syne’, sans-serif;
-cursor: pointer;
-white-space: nowrap;
-transition: opacity 0.2s;
-}
-
-.btn-run:hover { opacity: 0.88; }
-
-/* ===== PILL SELECTOR ===== */
-.pill-group {
-display: flex;
-gap: 6px;
-flex-wrap: wrap;
-}
-
-.pill {
-padding: 8px 16px;
-border-radius: 100px;
-border: 1px solid var(–border);
-background: var(–bg);
-color: var(–muted);
-font-size: 13px;
-font-weight: 700;
-font-family: ‘Space Mono’, monospace;
-cursor: pointer;
-transition: all 0.18s;
-user-select: none;
-}
-
-.pill:hover { border-color: var(–accent); color: var(–accent); }
-
-.pill.active {
-background: var(–accent);
-border-color: var(–accent);
-color: #000;
-}
-
-.pill.active-purple {
-background: var(–accent2);
-border-color: var(–accent2);
-color: #fff;
-}
-
-/* ===== SLIDER ===== */
-.slider-wrap {
-position: relative;
-}
-
-.slider-track {
-position: relative;
-height: 6px;
-background: var(–border);
-border-radius: 100px;
-margin: 10px 0 6px;
-}
-
-.slider-fill {
-position: absolute;
-left: 0;
-top: 0;
-height: 100%;
-background: linear-gradient(90deg, var(–accent2), var(–accent));
-border-radius: 100px;
-transition: width 0.15s;
-pointer-events: none;
-}
-
-input[type=“range”] {
-position: absolute;
-top: -7px;
-left: 0;
-width: 100%;
--webkit-appearance: none;
-appearance: none;
-background: transparent;
-cursor: pointer;
-}
-
-input[type=“range”]::-webkit-slider-thumb {
--webkit-appearance: none;
-width: 20px;
-height: 20px;
-border-radius: 50%;
-background: var(–accent);
-border: 3px solid var(–bg);
-box-shadow: 0 0 0 1px var(–accent);
-transition: transform 0.15s;
-}
-
-input[type=“range”]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-
-.slider-labels {
-display: flex;
-justify-content: space-between;
-font-size: 11px;
-color: var(–muted);
-font-family: ‘Space Mono’, monospace;
-margin-top: 4px;
-}
-
-.slider-value {
-display: inline-block;
-background: linear-gradient(135deg, var(–accent2), var(–accent));
-color: #fff;
-font-family: ‘Space Mono’, monospace;
-font-size: 13px;
-font-weight: 700;
-padding: 3px 10px;
-border-radius: 100px;
-margin-left: 10px;
-vertical-align: middle;
-}
-
-/* ===== SECTION LABEL ===== */
-.section-label {
-font-size: 11px;
-font-weight: 700;
-letter-spacing: 1.5px;
-text-transform: uppercase;
-color: var(–muted);
-font-family: ‘Space Mono’, monospace;
-margin-bottom: 10px;
-margin-top: 22px;
-display: flex;
-align-items: center;
-gap: 8px;
-}
-
-.section-label::after {
-content: ‘’;
-flex: 1;
-height: 1px;
-background: var(–border);
-}
-
-.option-item label {
-display: block;
-font-size: 11px;
-font-weight: 700;
-letter-spacing: 1px;
-text-transform: uppercase;
-color: var(–muted);
-margin-bottom: 6px;
-font-family: ‘Space Mono’, monospace;
-}
-
-.option-item select, .option-item input[type=“text”] {
-width: 100%;
-background: var(–bg);
-border: 1px solid var(–border);
-border-radius: 8px;
-padding: 9px 12px;
-color: var(–text);
-font-size: 13px;
-font-family: ‘Space Mono’, monospace;
-outline: none;
-transition: border-color 0.2s;
--webkit-appearance: none;
-}
-
-.option-item select:focus,
-.option-item input:focus {
-border-color: var(–accent);
-}
-
-.options-grid {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 14px;
-margin-bottom: 4px;
-}
-
-/* ===== FORMAT CARD ===== */
-.format-card {
-display: flex;
-flex-direction: column;
-align-items: center;
-padding: 14px 10px;
-border-radius: 12px;
-border: 1.5px solid var(–border);
-background: var(–bg);
-cursor: pointer;
-transition: all 0.18s;
-text-align: center;
-gap: 6px;
-}
-
-.format-card:hover { border-color: var(–accent); }
-
-.format-card.active {
-border-color: var(–accent);
-background: rgba(0,229,160,0.07);
-}
-
-.format-card .fmt-icon { font-size: 22px; }
-
-.format-card .fmt-name {
-font-size: 13px;
-font-weight: 700;
-font-family: ‘Space Mono’, monospace;
-color: var(–text);
-}
-
-.format-card .fmt-desc {
-font-size: 10px;
-color: var(–muted);
-font-family: ‘Space Mono’, monospace;
-line-height: 1.4;
-}
-
-.format-grid {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 10px;
-}
-
-/* ===== PRESETS ===== */
-.preset-btn {
-padding: 10px 14px;
-border-radius: 10px;
-border: 1px solid var(–border);
-background: var(–bg);
-color: var(–text);
-font-size: 12px;
-font-weight: 700;
-font-family: ‘Space Mono’, monospace;
-cursor: pointer;
-transition: all 0.18s;
-text-align: left;
-}
-
-.preset-btn:hover { border-color: var(–accent2); color: var(–accent); }
-
-.preset-btn .preset-name { font-size: 13px; margin-bottom: 3px; }
-.preset-btn .preset-desc { font-size: 10px; color: var(–muted); }
-
-.preset-grid {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 10px;
-}
-
-.toggle-row {
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 10px 0;
-border-bottom: 1px solid var(–border);
-}
-
-.toggle-row:last-child { border-bottom: none; }
-
-.toggle-label {
-font-size: 14px;
-color: var(–text);
-}
-
-.toggle-sub {
-font-size: 11px;
-color: var(–muted);
-font-family: ‘Space Mono’, monospace;
-margin-top: 2px;
-}
-
-.toggle {
-width: 44px;
-height: 24px;
-background: var(–border);
-border-radius: 100px;
-cursor: pointer;
-position: relative;
-transition: background 0.2s;
-flex-shrink: 0;
-}
-
-.toggle.on { background: var(–accent); }
-
-.toggle::after {
-content: ‘’;
-position: absolute;
-top: 3px;
-left: 3px;
-width: 18px;
-height: 18px;
-background: white;
-border-radius: 50%;
-transition: transform 0.2s;
-box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-}
-
-.toggle.on::after { transform: translateX(20px); }
-
-.command-preview {
-background: var(–bg);
-border: 1px solid var(–border);
-border-radius: 12px;
-padding: 16px;
-font-family: ‘Space Mono’, monospace;
-font-size: 12px;
-color: var(–accent);
-line-height: 1.7;
-white-space: pre-wrap;
-word-break: break-all;
-max-height: 160px;
-overflow-y: auto;
-position: relative;
-}
-
-.copy-btn {
-position: absolute;
-top: 10px;
-right: 10px;
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 6px;
-padding: 4px 10px;
-font-size: 11px;
-color: var(–muted);
-cursor: pointer;
-font-family: ‘Space Mono’, monospace;
-transition: color 0.2s, border-color 0.2s;
-}
-
-.copy-btn:hover { color: var(–accent); border-color: var(–accent); }
-
-.status-bar {
-display: flex;
-align-items: center;
-gap: 8px;
-margin-top: 14px;
-font-size: 12px;
-font-family: ‘Space Mono’, monospace;
-color: var(–muted);
-}
-
-.status-dot {
-width: 8px;
-height: 8px;
-border-radius: 50%;
-background: var(–muted);
-}
-
-.status-dot.ready { background: var(–accent); box-shadow: 0 0 6px var(–accent); }
-
-.tabs {
-display: flex;
-gap: 4px;
-background: var(–bg);
-border: 1px solid var(–border);
-border-radius: 10px;
-padding: 4px;
-margin-bottom: 20px;
-}
-
-.tab {
-flex: 1;
-padding: 8px;
-text-align: center;
-border-radius: 7px;
-font-size: 13px;
-font-weight: 700;
-cursor: pointer;
-transition: background 0.2s, color 0.2s;
-color: var(–muted);
-}
-
-.tab.active {
-background: var(–surface);
-color: var(–text);
-}
-
-.cookie-method-tabs {
-display: flex;
-gap: 8px;
-flex-wrap: wrap;
-}
-
-.cmethod {
-display: flex;
-align-items: center;
-gap: 8px;
-padding: 10px 14px;
-border-radius: 10px;
-border: 1.5px solid var(–border);
-background: var(–bg);
-cursor: pointer;
-transition: all 0.18s;
-font-size: 13px;
-font-weight: 700;
-color: var(–muted);
-position: relative;
-}
-
-.cmethod:hover { border-color: var(–accent); color: var(–text); }
-
-.cmethod.active {
-border-color: var(–accent);
-background: rgba(0,229,160,0.07);
-color: var(–text);
-}
-
-.cmethod-icon { font-size: 16px; }
-.cmethod-label { font-family: ‘Syne’, sans-serif; }
-
-.cmethod-badge {
-background: var(–accent);
-color: #000;
-font-size: 10px;
-font-weight: 700;
-padding: 2px 7px;
-border-radius: 100px;
-font-family: ‘Space Mono’, monospace;
-}
-
-.browser-grid {
-display: grid;
-grid-template-columns: repeat(6, 1fr);
-gap: 8px;
-}
-
-.browser-card {
-display: flex;
-flex-direction: column;
-align-items: center;
-padding: 12px 6px;
-border-radius: 10px;
-border: 1.5px solid var(–border);
-background: var(–bg);
-cursor: pointer;
-transition: all 0.18s;
-gap: 6px;
-}
-
-.browser-card:hover { border-color: var(–accent); }
-
-.browser-card.active {
-border-color: var(–accent);
-background: rgba(0,229,160,0.07);
-}
-
-.br-icon { font-size: 20px; }
-
-.br-name {
-font-size: 11px;
-font-weight: 700;
-font-family: ‘Space Mono’, monospace;
-color: var(–muted);
-}
-
-.browser-card.active .br-name { color: var(–accent); }
-
-.btn-test-login {
-display: flex;
-align-items: center;
-gap: 8px;
-padding: 11px 20px;
-background: var(–bg);
-border: 1.5px solid var(–accent2);
-border-radius: 10px;
-color: var(–text);
-font-size: 13px;
-font-weight: 700;
-font-family: ‘Syne’, sans-serif;
-cursor: pointer;
-transition: all 0.2s;
-width: 100%;
-justify-content: center;
-}
-
-.btn-test-login:hover {
-background: rgba(124,58,237,0.1);
-border-color: var(–accent);
-}
-
-.btn-test-login:disabled {
-opacity: 0.5;
-cursor: not-allowed;
-}
-
-.test-result-box {
-margin-top: 12px;
-border-radius: 10px;
-overflow: hidden;
-border: 1px solid var(–border);
-}
-
-.test-log {
-background: #0d0d14;
-padding: 12px 14px;
-font-family: ‘Space Mono’, monospace;
-font-size: 11px;
-color: var(–muted);
-line-height: 1.8;
-min-height: 40px;
-max-height: 120px;
-overflow-y: auto;
-}
-
-.test-log .log-line { display: block; }
-
-.test-result {
-padding: 14px 16px;
-font-size: 13px;
-font-weight: 700;
-font-family: ‘Syne’, sans-serif;
-display: flex;
-align-items: flex-start;
-gap: 10px;
-flex-direction: column;
-}
-
-.test-result .result-main { font-size: 15px; }
-.test-result .result-detail {
-font-size: 11px;
-font-weight: 400;
-font-family: ‘Space Mono’, monospace;
-opacity: 0.8;
-}
-
-.test-result.status-premium {
-background: rgba(0,229,160,0.08);
-border-top: 1px solid rgba(0,229,160,0.2);
-color: var(–accent);
-}
-
-.test-result.status-logged_in {
-background: rgba(0,180,255,0.08);
-border-top: 1px solid rgba(0,180,255,0.2);
-color: #00b4ff;
-}
-
-.test-result.status-not_logged_in,
-.test-result.status-cookie_error,
-.test-result.status-error {
-background: rgba(255,68,68,0.08);
-border-top: 1px solid rgba(255,68,68,0.2);
-color: #ff6666;
-}
-
-.test-result.status-timeout {
-background: rgba(255,170,0,0.08);
-border-top: 1px solid rgba(255,170,0,0.2);
-color: var(–warning);
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-.spinning { display: inline-block; animation: spin 1s linear infinite; }
-
-.cookie-note {
-margin-top: 12px;
-padding: 10px 14px;
-background: rgba(124,58,237,0.08);
-border: 1px solid rgba(124,58,237,0.2);
-border-radius: 8px;
-font-size: 12px;
-color: var(–muted);
-font-family: ‘Space Mono’, monospace;
-line-height: 1.6;
-}
-
-.cookie-note strong { color: var(–accent); }
-
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    position: relative;
+    padding: 40px 0;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(124,58,237,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 80% 80%, rgba(0,229,160,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== APP SCREEN ===== */
+  .app-screen {
+    display: none;
+    width: 100%;
+    max-width: 800px;
+    padding: 20px;
+    position: relative;
+    z-index: 10;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+
+  .app-header .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mini-logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .app-header h1 {
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .yt-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 7px 14px 7px 10px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    transition: border-color 0.3s, color 0.3s;
+  }
+
+  .yt-status-badge.logged-in {
+    border-color: rgba(255, 0, 0, 0.4);
+    color: var(--text);
+    background: rgba(255, 0, 0, 0.06);
+  }
+
+  .yt-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s, box-shadow 0.3s;
+    flex-shrink: 0;
+  }
+
+  .yt-status-badge.logged-in .yt-status-dot {
+    background: #ff4444;
+    box-shadow: 0 0 6px #ff4444;
+    animation: pulse-red 2s infinite;
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 4px #ff4444; }
+    50% { box-shadow: 0 0 10px #ff4444; }
+  }
+
+  .yt-status-icon {
+    font-size: 11px;
+    color: #ff4444;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+  }
+
+  .yt-status-badge.logged-in .yt-status-icon { opacity: 1; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .url-input-wrap {
+    display: flex;
+    gap: 10px;
+  }
+
+  .url-input-wrap input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Space Mono', monospace;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .url-input-wrap input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,160,0.12);
+  }
+
+  .url-input-wrap input::placeholder { color: var(--muted); }
+
+  .btn-run {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 10px;
+    padding: 12px 22px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+
+  .btn-run:hover { opacity: 0.88; }
+
+  /* ===== PILL SELECTOR ===== */
+  .pill-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+
+  .pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+  }
+
+  .pill.active-purple {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #fff;
+  }
+
+  /* ===== SLIDER ===== */
+  .slider-wrap {
+    position: relative;
+  }
+
+  .slider-track {
+    position: relative;
+    height: 6px;
+    background: var(--border);
+    border-radius: 100px;
+    margin: 10px 0 6px;
+  }
+
+  .slider-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 100px;
+    transition: width 0.15s;
+    pointer-events: none;
+  }
+
+  input[type="range"] {
+    position: absolute;
+    top: -7px;
+    left: 0;
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+    transition: transform 0.15s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-top: 4px;
+  }
+
+  .slider-value {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+
+  /* ===== SECTION LABEL ===== */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 10px;
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .option-item label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .option-item select, .option-item input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .option-item select:focus,
+  .option-item input:focus {
+    border-color: var(--accent);
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 4px;
+  }
+
+  /* ===== FORMAT CARD ===== */
+  .format-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 10px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+    gap: 6px;
+  }
+
+  .format-card:hover { border-color: var(--accent); }
+
+  .format-card.active {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.07);
+  }
+
+  .format-card .fmt-icon { font-size: 22px; }
+
+  .format-card .fmt-name {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    color: var(--text);
+  }
+
+  .format-card .fmt-desc {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    line-height: 1.4;
+  }
+
+  .format-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  /* ===== PRESETS ===== */
+  .preset-btn {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: left;
+  }
+
+  .preset-btn:hover { border-color: var(--accent2); color: var(--accent); }
+
+  .preset-btn .preset-name { font-size: 13px; margin-bottom: 3px; }
+  .preset-btn .preset-desc { font-size: 10px; color: var(--muted); }
+
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toggle-row:last-child { border-bottom: none; }
+
+  .toggle-label {
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .toggle-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-top: 2px;
+  }
+
+  .toggle {
+    width: 44px;
+    height: 24px;
+    background: var(--border);
+    border-radius: 100px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle.on { background: var(--accent); }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  .toggle.on::after { transform: translateX(20px); }
+
+  .command-preview {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 160px;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+
+  .status-dot.ready { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    color: var(--muted);
+  }
+
+  .tab.active {
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .cookie-method-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .cmethod {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.18s;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    position: relative;
+  }
+
+  .cmethod:hover { border-color: var(--accent); color: var(--text); }
+
+  .cmethod.active {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.07);
+    color: var(--text);
+  }
+
+  .cmethod-icon { font-size: 16px; }
+  .cmethod-label { font-family: 'Syne', sans-serif; }
+
+  .cmethod-badge {
+    background: var(--accent);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 100px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .browser-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+
+  .browser-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 6px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.18s;
+    gap: 6px;
+  }
+
+  .browser-card:hover { border-color: var(--accent); }
+
+  .browser-card.active {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.07);
+  }
+
+  .br-icon { font-size: 20px; }
+
+  .br-name {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+  }
+
+  .browser-card.active .br-name { color: var(--accent); }
+
+  .btn-test-login {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    background: var(--bg);
+    border: 1.5px solid var(--accent2);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-test-login:hover {
+    background: rgba(124,58,237,0.1);
+    border-color: var(--accent);
+  }
+
+  .btn-test-login:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .test-result-box {
+    margin-top: 12px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .test-log {
+    background: #0d0d14;
+    padding: 12px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+    min-height: 40px;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  .test-log .log-line { display: block; }
+
+  .test-result {
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .test-result .result-main { font-size: 15px; }
+  .test-result .result-detail {
+    font-size: 11px;
+    font-weight: 400;
+    font-family: 'Space Mono', monospace;
+    opacity: 0.8;
+  }
+
+  .test-result.status-premium {
+    background: rgba(0,229,160,0.08);
+    border-top: 1px solid rgba(0,229,160,0.2);
+    color: var(--accent);
+  }
+
+  .test-result.status-logged_in {
+    background: rgba(0,180,255,0.08);
+    border-top: 1px solid rgba(0,180,255,0.2);
+    color: #00b4ff;
+  }
+
+  .test-result.status-not_logged_in,
+  .test-result.status-cookie_error,
+  .test-result.status-error {
+    background: rgba(255,68,68,0.08);
+    border-top: 1px solid rgba(255,68,68,0.2);
+    color: #ff6666;
+  }
+
+  .test-result.status-timeout {
+    background: rgba(255,170,0,0.08);
+    border-top: 1px solid rgba(255,170,0,0.2);
+    color: var(--warning);
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinning { display: inline-block; animation: spin 1s linear infinite; }
+
+  .cookie-note {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(124,58,237,0.08);
+    border: 1px solid rgba(124,58,237,0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    line-height: 1.6;
+  }
+
+  .cookie-note strong { color: var(--accent); }
+
+  /* ===== PLAYLIST LIST ===== */
+  .playlist-list {
+    max-height: 420px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+  }
+
+  .playlist-list::-webkit-scrollbar { width: 4px; }
+  .playlist-list::-webkit-scrollbar-track { background: transparent; }
+  .playlist-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .playlist-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .playlist-item:last-child { border-bottom: none; }
+  .playlist-item:hover { background: rgba(255,255,255,0.04); }
+
+  .playlist-item.active { background: rgba(0,229,160,0.07); }
+
+  .pl-index {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    width: 22px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .pl-thumb {
+    width: 80px;
+    height: 45px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .pl-info { flex: 1; min-width: 0; }
+
+  .pl-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+
+  .playlist-item.active .pl-title { color: var(--accent); }
+
+  .pl-artist {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pl-duration {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .pl-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 36px 20px;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    border-top: 1px solid var(--border);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
 </style>
-
 </head>
 <body>
 <div class="grid-bg"></div>
 
 <!-- APP SCREEN -->
-
 <div class="app-screen" id="appScreen" style="display:block;">
   <div class="app-header">
     <div class="brand">
       <div class="mini-logo">🎵</div>
-      <h1>YT-DLP Downloader</h1>
+      <div>
+        <h1>YT-DLP Downloader</h1>
+        <div style="font-size:10px; color:var(--muted); font-family:'Space Mono',monospace; margin-top:2px;">v1.1.0</div>
+      </div>
     </div>
     <div style="display:flex; align-items:center; gap:10px;">
       <!-- YouTube login status badge -->
@@ -796,7 +882,6 @@ line-height: 1.6;
   </div>
 
   <!-- DOWNLOAD TAB -->
-
   <div class="tab-content active" id="tab-download">
     <div class="card">
       <div class="card-title">📎 YouTube URL</div>
@@ -807,244 +892,247 @@ line-height: 1.6;
       </div>
     </div>
 
-```
-<!-- PLAYLIST EMBED -->
-<div class="card" style="padding: 0; overflow: hidden;">
-  <div style="display:flex; align-items:center; justify-content:space-between; padding: 16px 20px 14px;">
-    <div class="card-title" style="margin:0;">▶ プレイリストプレビュー</div>
-    <button onclick="toggleEmbed()" id="embedToggleBtn"
-      style="background:none; border:1px solid var(--border); border-radius:6px; color:var(--muted);
-             font-size:11px; font-family:'Space Mono',monospace; padding:4px 10px; cursor:pointer;
-             transition: color 0.2s, border-color 0.2s;"
-      onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'"
-      onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">
-      非表示
-    </button>
-  </div>
-  <div id="embedContainer">
-    <iframe
-      id="ytEmbed"
-      src="https://www.youtube.com/embed/ju9W47AL3Lw?list=PLg3Q8w2gsKyAqs_YuYaLj7mPwZFHB9D5Z&rel=0"
-      style="width:100%; height:360px; display:block; border:none;"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen>
-    </iframe>
-  </div>
-</div>
-
-<!-- PRESETS -->
-<div class="card">
-  <div class="card-title">⚡ プリセット</div>
-  <div class="preset-grid">
-    <button class="preset-btn" onclick="applyPreset('hifi')">
-      <div class="preset-name">🎼 Hi-Fi</div>
-      <div class="preset-desc">FLAC / 最高音質<br>ロスレス</div>
-    </button>
-    <button class="preset-btn" onclick="applyPreset('standard')">
-      <div class="preset-name">🎵 Standard</div>
-      <div class="preset-desc">MP3 / 320K<br>汎用性重視</div>
-    </button>
-    <button class="preset-btn" onclick="applyPreset('podcast')">
-      <div class="preset-name">🎙 Podcast</div>
-      <div class="preset-desc">MP3 / 128K<br>軽量・省容量</div>
-    </button>
-  </div>
-</div>
-
-<!-- FORMAT -->
-<div class="card">
-  <div class="card-title">🎵 音声フォーマット</div>
-  <div class="format-grid">
-    <div class="format-card active" id="fmt-mp3" onclick="selectFormat('mp3')">
-      <div class="fmt-icon">🎸</div>
-      <div class="fmt-name">MP3</div>
-      <div class="fmt-desc">互換性最高<br>汎用</div>
-    </div>
-    <div class="format-card" id="fmt-flac" onclick="selectFormat('flac')">
-      <div class="fmt-icon">💿</div>
-      <div class="fmt-name">FLAC</div>
-      <div class="fmt-desc">ロスレス<br>高音質</div>
-    </div>
-    <div class="format-card" id="fmt-m4a" onclick="selectFormat('m4a')">
-      <div class="fmt-icon">🍎</div>
-      <div class="fmt-name">M4A</div>
-      <div class="fmt-desc">Apple向け<br>AAC</div>
-    </div>
-    <div class="format-card" id="fmt-opus" onclick="selectFormat('opus')">
-      <div class="fmt-icon">🔊</div>
-      <div class="fmt-name">OPUS</div>
-      <div class="fmt-desc">高効率<br>小サイズ</div>
-    </div>
-  </div>
-</div>
-
-<!-- QUALITY -->
-<div class="card">
-  <div class="card-title">📊 音質 (ビットレート)</div>
-
-  <div class="section-label">プリセット音質</div>
-  <div class="pill-group" id="qualityPills">
-    <div class="pill" onclick="selectQualityPill(this,'96K')">96K</div>
-    <div class="pill" onclick="selectQualityPill(this,'128K')">128K</div>
-    <div class="pill" onclick="selectQualityPill(this,'192K')">192K</div>
-    <div class="pill" onclick="selectQualityPill(this,'256K')">256K</div>
-    <div class="pill active" onclick="selectQualityPill(this,'320K')">320K ⭐</div>
-  </div>
-
-  <div class="section-label">カスタムビットレート</div>
-  <div class="slider-wrap">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-      <span style="font-size:13px; color:var(--muted); font-family:'Space Mono',monospace;">ビットレート</span>
-      <span class="slider-value" id="qualityDisplay">320K</span>
-    </div>
-    <div class="slider-track">
-      <div class="slider-fill" id="qualityFill" style="width:100%"></div>
-      <input type="range" id="qualitySlider" min="0" max="4" value="4" step="1"
-        oninput="onQualitySlider(this.value)">
-    </div>
-    <div class="slider-labels">
-      <span>96K</span><span>128K</span><span>192K</span><span>256K</span><span>320K</span>
-    </div>
-  </div>
-</div>
-
-<!-- ADVANCED OPTIONS -->
-<div class="card">
-  <div class="card-title">⚙ 詳細設定</div>
-
-  <div class="section-label">🍪 Cookie 取得方法</div>
-
-  <!-- Cookie method selector -->
-  <div class="cookie-method-tabs">
-    <div class="cmethod active" id="cm-browser" onclick="selectCookieMethod('browser')">
-      <span class="cmethod-icon">🌐</span>
-      <span class="cmethod-label">ブラウザから自動取得</span>
-      <span class="cmethod-badge">推奨</span>
-    </div>
-    <div class="cmethod" id="cm-file" onclick="selectCookieMethod('file')">
-      <span class="cmethod-icon">📄</span>
-      <span class="cmethod-label">cookies.txt を指定</span>
-    </div>
-    <div class="cmethod" id="cm-none" onclick="selectCookieMethod('none')">
-      <span class="cmethod-icon">🚫</span>
-      <span class="cmethod-label">なし</span>
-    </div>
-  </div>
-
-  <!-- Browser selector -->
-  <div id="cookie-browser-section">
-    <div style="margin-top:14px;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:10px;">使用するブラウザ</div>
-      <div class="browser-grid">
-        <div class="browser-card active" id="br-chrome" onclick="selectBrowser('chrome')">
-          <div class="br-icon">🟡</div>
-          <div class="br-name">Chrome</div>
+    <!-- PLAYLIST LIST -->
+    <div class="card" style="padding:0; overflow:hidden;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px 14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="card-title" style="margin:0;">🎵 プレイリスト</div>
+          <span id="playlistCount" style="font-size:11px; color:var(--muted); font-family:'Space Mono',monospace;"></span>
         </div>
-        <div class="browser-card" id="br-firefox" onclick="selectBrowser('firefox')">
-          <div class="br-icon">🦊</div>
-          <div class="br-name">Firefox</div>
-        </div>
-        <div class="browser-card" id="br-safari" onclick="selectBrowser('safari')">
-          <div class="br-icon">🧭</div>
-          <div class="br-name">Safari</div>
-        </div>
-        <div class="browser-card" id="br-edge" onclick="selectBrowser('edge')">
-          <div class="br-icon">🔷</div>
-          <div class="br-name">Edge</div>
-        </div>
-        <div class="browser-card" id="br-brave" onclick="selectBrowser('brave')">
-          <div class="br-icon">🦁</div>
-          <div class="br-name">Brave</div>
-        </div>
-        <div class="browser-card" id="br-opera" onclick="selectBrowser('opera')">
-          <div class="br-icon">🅾</div>
-          <div class="br-name">Opera</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="playlistLoadBtn" onclick="loadPlaylist()"
+            style="background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:7px;
+                   padding:6px 14px;color:#fff;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;
+                   cursor:pointer;transition:opacity 0.2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            読み込む
+          </button>
+          <button onclick="toggleEmbed()" id="embedToggleBtn"
+            style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);
+                   font-size:11px;font-family:'Space Mono',monospace;padding:4px 10px;cursor:pointer;transition:color 0.2s,border-color 0.2s;"
+            onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'"
+            onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">非表示</button>
         </div>
       </div>
-      <div class="cookie-note">
-        💡 YouTubeにログイン済みの状態でブラウザを<strong>閉じてから</strong>コマンドを実行してください
+      <div id="embedContainer">
+        <div id="playlistContainer">
+          <div id="playlistEmpty" style="text-align:center;padding:36px 20px;color:var(--muted);font-size:13px;font-family:'Space Mono',monospace;">
+            「読み込む」を押してプレイリストを表示<br>
+            <span style="font-size:11px;opacity:0.6;">※ server.py の起動が必要です</span>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <!-- Login Test UI -->
-      <div style="margin-top:16px;">
-        <button class="btn-test-login" id="btnTestLogin" onclick="testYouTubeLogin()">
-          <span id="testBtnIcon">🔍</span>
-          <span id="testBtnText">YouTubeログイン状態をテスト</span>
+    <!-- PRESETS -->
+    <div class="card">
+      <div class="card-title">⚡ プリセット</div>
+      <div class="preset-grid">
+        <button class="preset-btn" onclick="applyPreset('hifi')">
+          <div class="preset-name">🎼 Hi-Fi</div>
+          <div class="preset-desc">FLAC / 最高音質<br>ロスレス</div>
         </button>
+        <button class="preset-btn" onclick="applyPreset('standard')">
+          <div class="preset-name">🎵 Standard</div>
+          <div class="preset-desc">MP3 / 320K<br>汎用性重視</div>
+        </button>
+        <button class="preset-btn" onclick="applyPreset('podcast')">
+          <div class="preset-name">🎙 Podcast</div>
+          <div class="preset-desc">MP3 / 128K<br>軽量・省容量</div>
+        </button>
+      </div>
+    </div>
 
-        <div class="test-result-box" id="testResultBox" style="display:none;">
-          <div class="test-log" id="testLog"></div>
-          <div class="test-result" id="testResult" style="display:none;"></div>
+    <!-- FORMAT -->
+    <div class="card">
+      <div class="card-title">🎵 音声フォーマット</div>
+      <div class="format-grid">
+        <div class="format-card active" id="fmt-mp3" onclick="selectFormat('mp3')">
+          <div class="fmt-icon">🎸</div>
+          <div class="fmt-name">MP3</div>
+          <div class="fmt-desc">互換性最高<br>汎用</div>
+        </div>
+        <div class="format-card" id="fmt-flac" onclick="selectFormat('flac')">
+          <div class="fmt-icon">💿</div>
+          <div class="fmt-name">FLAC</div>
+          <div class="fmt-desc">ロスレス<br>高音質</div>
+        </div>
+        <div class="format-card" id="fmt-m4a" onclick="selectFormat('m4a')">
+          <div class="fmt-icon">🍎</div>
+          <div class="fmt-name">M4A</div>
+          <div class="fmt-desc">Apple向け<br>AAC</div>
+        </div>
+        <div class="format-card" id="fmt-opus" onclick="selectFormat('opus')">
+          <div class="fmt-icon">🔊</div>
+          <div class="fmt-name">OPUS</div>
+          <div class="fmt-desc">高効率<br>小サイズ</div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- File path input -->
-  <div id="cookie-file-section" style="display:none; margin-top:14px;">
-    <div class="option-item">
-      <label>cookies.txt パス</label>
-      <input type="text" id="cookies" value="~/Desktop/cookies.txt" oninput="generateCommand()">
-    </div>
-    <div class="cookie-note" style="margin-top:10px;">
-      💡 ブラウザ拡張 <strong>「Get cookies.txt LOCALLY」</strong> でエクスポートできます
-    </div>
-  </div>
+    <!-- QUALITY -->
+    <div class="card">
+      <div class="card-title">📊 音質 (ビットレート)</div>
 
-  <div class="options-grid" style="margin-top:18px;">
-    <div class="option-item">
-      <label>アーカイブファイル</label>
-      <input type="text" id="archive" value="~/yt-dlp-archive.txt" oninput="generateCommand()">
-    </div>
-    <div class="option-item" style="grid-column:1/-1;">
-      <label>出力テンプレート</label>
-      <input type="text" id="output" value="%(playlist)s/%(playlist_index)03d - %(title)s.%(ext)s" oninput="generateCommand()">
-    </div>
-  </div>
+      <div class="section-label">プリセット音質</div>
+      <div class="pill-group" id="qualityPills">
+        <div class="pill" onclick="selectQualityPill(this,'96K')">96K</div>
+        <div class="pill" onclick="selectQualityPill(this,'128K')">128K</div>
+        <div class="pill" onclick="selectQualityPill(this,'192K')">192K</div>
+        <div class="pill" onclick="selectQualityPill(this,'256K')">256K</div>
+        <div class="pill active" onclick="selectQualityPill(this,'320K')">320K ⭐</div>
+      </div>
 
-  <div class="section-label">オプション</div>
-  <div class="toggle-row">
-    <div>
-      <div class="toggle-label">メタデータ埋め込み</div>
-      <div class="toggle-sub">--embed-metadata --add-metadata</div>
+      <div class="section-label">カスタムビットレート</div>
+      <div class="slider-wrap">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:13px; color:var(--muted); font-family:'Space Mono',monospace;">ビットレート</span>
+          <span class="slider-value" id="qualityDisplay">320K</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-fill" id="qualityFill" style="width:100%"></div>
+          <input type="range" id="qualitySlider" min="0" max="4" value="4" step="1"
+            oninput="onQualitySlider(this.value)">
+        </div>
+        <div class="slider-labels">
+          <span>96K</span><span>128K</span><span>192K</span><span>256K</span><span>320K</span>
+        </div>
+      </div>
     </div>
-    <div class="toggle on" id="t-metadata" onclick="toggleSwitch('t-metadata')"></div>
-  </div>
-  <div class="toggle-row">
-    <div>
-      <div class="toggle-label">サムネイル埋め込み</div>
-      <div class="toggle-sub">--embed-thumbnail</div>
-    </div>
-    <div class="toggle on" id="t-thumb" onclick="toggleSwitch('t-thumb')"></div>
-  </div>
-  <div class="toggle-row">
-    <div>
-      <div class="toggle-label">ダウンロード履歴管理</div>
-      <div class="toggle-sub">--download-archive（重複スキップ）</div>
-    </div>
-    <div class="toggle on" id="t-archive" onclick="toggleSwitch('t-archive')"></div>
-  </div>
-  <div class="toggle-row">
-    <div>
-      <div class="toggle-label">再生リストのみダウンロード</div>
-      <div class="toggle-sub">--yes-playlist</div>
-    </div>
-    <div class="toggle" id="t-playlist" onclick="toggleSwitch('t-playlist')"></div>
-  </div>
-  <div class="toggle-row">
-    <div>
-      <div class="toggle-label">エラー時スキップ</div>
-      <div class="toggle-sub">--ignore-errors</div>
-    </div>
-    <div class="toggle" id="t-ignore" onclick="toggleSwitch('t-ignore')"></div>
-  </div>
-</div>
-```
 
+    <!-- ADVANCED OPTIONS -->
+    <div class="card">
+      <div class="card-title">⚙ 詳細設定</div>
+
+      <div class="section-label">🍪 Cookie 取得方法</div>
+
+      <!-- Cookie method selector -->
+      <div class="cookie-method-tabs">
+        <div class="cmethod active" id="cm-browser" onclick="selectCookieMethod('browser')">
+          <span class="cmethod-icon">🌐</span>
+          <span class="cmethod-label">ブラウザから自動取得</span>
+          <span class="cmethod-badge">推奨</span>
+        </div>
+        <div class="cmethod" id="cm-file" onclick="selectCookieMethod('file')">
+          <span class="cmethod-icon">📄</span>
+          <span class="cmethod-label">cookies.txt を指定</span>
+        </div>
+        <div class="cmethod" id="cm-none" onclick="selectCookieMethod('none')">
+          <span class="cmethod-icon">🚫</span>
+          <span class="cmethod-label">なし</span>
+        </div>
+      </div>
+
+      <!-- Browser selector -->
+      <div id="cookie-browser-section">
+        <div style="margin-top:14px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:10px;">使用するブラウザ</div>
+          <div class="browser-grid">
+            <div class="browser-card active" id="br-chrome" onclick="selectBrowser('chrome')">
+              <div class="br-icon">🟡</div>
+              <div class="br-name">Chrome</div>
+            </div>
+            <div class="browser-card" id="br-firefox" onclick="selectBrowser('firefox')">
+              <div class="br-icon">🦊</div>
+              <div class="br-name">Firefox</div>
+            </div>
+            <div class="browser-card" id="br-safari" onclick="selectBrowser('safari')">
+              <div class="br-icon">🧭</div>
+              <div class="br-name">Safari</div>
+            </div>
+            <div class="browser-card" id="br-edge" onclick="selectBrowser('edge')">
+              <div class="br-icon">🔷</div>
+              <div class="br-name">Edge</div>
+            </div>
+            <div class="browser-card" id="br-brave" onclick="selectBrowser('brave')">
+              <div class="br-icon">🦁</div>
+              <div class="br-name">Brave</div>
+            </div>
+            <div class="browser-card" id="br-opera" onclick="selectBrowser('opera')">
+              <div class="br-icon">🅾</div>
+              <div class="br-name">Opera</div>
+            </div>
+          </div>
+          <div class="cookie-note">
+            💡 YouTubeにログイン済みの状態でブラウザを<strong>閉じてから</strong>コマンドを実行してください
+          </div>
+
+          <!-- Login Test UI -->
+          <div style="margin-top:16px;">
+            <button class="btn-test-login" id="btnTestLogin" onclick="testYouTubeLogin()">
+              <span id="testBtnIcon">🔍</span>
+              <span id="testBtnText">YouTubeログイン状態をテスト</span>
+            </button>
+
+            <div class="test-result-box" id="testResultBox" style="display:none;">
+              <div class="test-log" id="testLog"></div>
+              <div class="test-result" id="testResult" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- File path input -->
+      <div id="cookie-file-section" style="display:none; margin-top:14px;">
+        <div class="option-item">
+          <label>cookies.txt パス</label>
+          <input type="text" id="cookies" value="~/Desktop/cookies.txt" oninput="generateCommand()">
+        </div>
+        <div class="cookie-note" style="margin-top:10px;">
+          💡 ブラウザ拡張 <strong>「Get cookies.txt LOCALLY」</strong> でエクスポートできます
+        </div>
+      </div>
+
+      <div class="options-grid" style="margin-top:18px;">
+        <div class="option-item">
+          <label>アーカイブファイル</label>
+          <input type="text" id="archive" value="~/yt-dlp-archive.txt" oninput="generateCommand()">
+        </div>
+        <div class="option-item" style="grid-column:1/-1;">
+          <label>出力テンプレート</label>
+          <input type="text" id="output" value="%(playlist)s/%(playlist_index)03d - %(title)s.%(ext)s" oninput="generateCommand()">
+        </div>
+      </div>
+
+      <div class="section-label">オプション</div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">メタデータ埋め込み</div>
+          <div class="toggle-sub">--embed-metadata --add-metadata</div>
+        </div>
+        <div class="toggle on" id="t-metadata" onclick="toggleSwitch('t-metadata')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">サムネイル埋め込み</div>
+          <div class="toggle-sub">--embed-thumbnail</div>
+        </div>
+        <div class="toggle on" id="t-thumb" onclick="toggleSwitch('t-thumb')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">ダウンロード履歴管理</div>
+          <div class="toggle-sub">--download-archive（重複スキップ）</div>
+        </div>
+        <div class="toggle on" id="t-archive" onclick="toggleSwitch('t-archive')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">再生リストのみダウンロード</div>
+          <div class="toggle-sub">--yes-playlist</div>
+        </div>
+        <div class="toggle" id="t-playlist" onclick="toggleSwitch('t-playlist')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">エラー時スキップ</div>
+          <div class="toggle-sub">--ignore-errors</div>
+        </div>
+        <div class="toggle" id="t-ignore" onclick="toggleSwitch('t-ignore')"></div>
+      </div>
+    </div>
   </div>
 
   <!-- COMMAND TAB -->
-
   <div class="tab-content" id="tab-command">
     <div class="card">
       <div class="card-title">💻 生成されたコマンド</div>
@@ -1058,19 +1146,17 @@ line-height: 1.6;
       </div>
     </div>
 
-```
-<div class="card" style="border-color: rgba(255,170,0,0.2);">
-  <div class="card-title">⚠ 注意事項</div>
-  <p style="font-size: 13px; color: var(--muted); line-height: 1.7; font-family: 'Space Mono', monospace;">
-    • cookies.txt は YouTube の認証に必要です<br>
-    • ダウンロード済みURLはアーカイブで管理されます<br>
-    • 著作権法に従いご利用ください<br>
-    • yt-dlp は事前にインストールが必要です
-  </p>
-</div>
-```
-
+    <div class="card" style="border-color: rgba(255,170,0,0.2);">
+      <div class="card-title">⚠ 注意事項</div>
+      <p style="font-size: 13px; color: var(--muted); line-height: 1.7; font-family: 'Space Mono', monospace;">
+        • cookies.txt は YouTube の認証に必要です<br>
+        • ダウンロード済みURLはアーカイブで管理されます<br>
+        • 著作権法に従いご利用ください<br>
+        • yt-dlp は事前にインストールが必要です
+      </p>
+    </div>
   </div>
+
 </div>
 
 <script>
@@ -1359,22 +1445,208 @@ function copyCommand() {
 
 document.getElementById('ytUrl').addEventListener('input', () => {
   generateCommand();
-  updateEmbed();
 });
 
-// ===== EMBED =====
-function updateEmbed() {
-  const raw = document.getElementById('ytUrl').value.trim();
-  if (!raw) return;
+// ===== PLAYLIST =====
+let playlistVideos = [];
+let activeVideoIndex = -1;
+
+async function loadPlaylist() {
+  const url = document.getElementById('ytUrl').value.trim();
+  if (!url) return;
+
+  const container = document.getElementById('playlistContainer');
+  const countEl = document.getElementById('playlistCount');
+  const btn = document.getElementById('playlistLoadBtn');
+
+  btn.textContent = '読込中...';
+  btn.disabled = true;
+  container.innerHTML = '<div class="pl-loading"><span class="spinning">⟳</span> プレイリスト情報を取得中...</div>';
+  countEl.textContent = '';
+
+  // まずサーバーに接続を試みる
+  let serverAvailable = false;
   try {
-    const u = new URL(raw);
-    const v = u.searchParams.get('v');
-    const list = u.searchParams.get('list');
-    let src = 'https://www.youtube.com/embed/';
-    if (v) src += v;
-    if (list) src += (v ? '?' : 'videoseries?') + 'list=' + list + '&rel=0';
-    document.getElementById('ytEmbed').src = src;
-  } catch(e) {}
+    const check = await fetch(`${SERVER}/api/check-ytdlp`, { signal: AbortSignal.timeout(2000) });
+    const checkData = await check.json();
+    serverAvailable = checkData.ok;
+  } catch {}
+
+  if (serverAvailable) {
+    // ===== サーバーあり: yt-dlpで完全な情報を取得 =====
+    const params = new URLSearchParams({
+      url,
+      method: cookieMethod,
+      browser: selectedBrowser,
+      cookiefile: document.getElementById('cookies')?.value?.trim() || ''
+    });
+
+    try {
+      const res = await fetch(`${SERVER}/api/playlist-info?${params}`, { signal: AbortSignal.timeout(35000) });
+      const data = await res.json();
+
+      if (!data.ok) {
+        container.innerHTML = `<div style="padding:24px 20px;color:#ff6666;font-size:13px;font-family:'Space Mono',monospace;border-top:1px solid var(--border);">❌ ${data.error}</div>`;
+        btn.textContent = '読み込む'; btn.disabled = false;
+        return;
+      }
+
+      playlistVideos = data.videos;
+      countEl.textContent = `${data.count} 曲`;
+      renderPlaylist('full');
+
+    } catch (e) {
+      // サーバーが途中で落ちた場合はフォールバック
+      await loadWithoutServer(url, container, countEl);
+    }
+
+  } else {
+    // ===== サーバーなし: URLから取得できる情報のみ表示 =====
+    await loadWithoutServer(url, container, countEl);
+  }
+
+  btn.textContent = '読み込む';
+  btn.disabled = false;
+}
+
+async function loadWithoutServer(url, container, countEl) {
+  // URLからlist IDとvideo IDを抽出
+  let listId = null, firstVideoId = null;
+  try {
+    const u = new URL(url);
+    listId = u.searchParams.get('list');
+    firstVideoId = u.searchParams.get('v');
+  } catch {}
+
+  if (!listId && !firstVideoId) {
+    container.innerHTML = `<div style="padding:24px 20px;color:var(--muted);font-size:13px;font-family:'Space Mono',monospace;border-top:1px solid var(--border);">
+      ⚠️ プレイリストIDが見つかりません<br>
+      <span style="font-size:11px;opacity:0.6;">server.py を起動するとタイトル・アーティスト名も取得できます</span>
+    </div>`;
+    return;
+  }
+
+  // oEmbedで最低限の情報（タイトル・チャンネル名）を取得
+  let oembedInfo = null;
+  if (firstVideoId) {
+    try {
+      const oRes = await fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${firstVideoId}&format=json`,
+        { signal: AbortSignal.timeout(4000) }
+      );
+      oembedInfo = await oRes.json();
+    } catch {}
+  }
+
+  // サムネイルCDNから取得できる動画をリストとして1件表示（プレイリスト全体は取得不可）
+  // ただしリストIDがあれば最大5件分のサムネイルを推測表示
+  if (listId) {
+    // プレイリストIDはあるが個別動画IDは不明のため、取得できた動画だけ表示
+    const videos = firstVideoId ? [{
+      id: firstVideoId,
+      title: oembedInfo?.title || null,
+      uploader: oembedInfo?.author_name || null,
+      thumbnail: `https://i.ytimg.com/vi/${firstVideoId}/mqdefault.jpg`,
+      duration: null
+    }] : [];
+
+    playlistVideos = videos;
+    countEl.textContent = videos.length > 0 ? `1 曲（部分取得）` : '';
+
+    const notice = `
+      <div style="padding:8px 20px;background:rgba(255,170,0,0.08);border-bottom:1px solid rgba(255,170,0,0.15);
+                  font-size:11px;color:var(--warning);font-family:'Space Mono',monospace;display:flex;align-items:center;gap:8px;">
+        ⚠️ server.py 未起動 — サムネイル・取得可能な情報のみ表示中
+      </div>`;
+
+    if (videos.length === 0) {
+      container.innerHTML = notice + `<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">
+        プレイリストの動画情報を取得できませんでした<br>
+        <span style="font-size:11px;font-family:'Space Mono',monospace;opacity:0.6;">python3 server.py を起動してください</span>
+      </div>`;
+    } else {
+      renderPlaylist('partial', notice);
+    }
+  } else if (firstVideoId) {
+    // 単体動画
+    playlistVideos = [{
+      id: firstVideoId,
+      title: oembedInfo?.title || null,
+      uploader: oembedInfo?.author_name || null,
+      thumbnail: `https://i.ytimg.com/vi/${firstVideoId}/mqdefault.jpg`,
+      duration: null
+    }];
+    countEl.textContent = '1 曲（部分取得）';
+    const notice = `<div style="padding:8px 20px;background:rgba(255,170,0,0.08);border-bottom:1px solid rgba(255,170,0,0.15);
+                font-size:11px;color:var(--warning);font-family:'Space Mono',monospace;">
+      ⚠️ server.py 未起動 — サムネイル・取得可能な情報のみ表示中
+    </div>`;
+    renderPlaylist('partial', notice);
+  }
+}
+
+function renderPlaylist(mode = 'full', prefixHtml = '') {
+  const container = document.getElementById('playlistContainer');
+  if (!playlistVideos.length) {
+    container.innerHTML = prefixHtml + '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">動画が見つかりませんでした</div>';
+    return;
+  }
+
+  const items = playlistVideos.map((v, i) => {
+    const dur = formatDuration(v.duration);
+    const isActive = i === activeVideoIndex;
+    const titleHtml = v.title
+      ? escapeHtml(v.title)
+      : `<span style="color:var(--muted);font-style:italic;">タイトル不明（server.py で取得可能）</span>`;
+    const artistHtml = v.uploader
+      ? escapeHtml(v.uploader)
+      : `<span style="opacity:0.4;">— server.py で取得可能</span>`;
+
+    return `
+    <div class="playlist-item ${isActive ? 'active' : ''}" onclick="selectVideo(${i})">
+      <div class="pl-index">${i + 1}</div>
+      <img class="pl-thumb" src="${v.thumbnail}" alt="" loading="lazy"
+        onerror="this.src='https://i.ytimg.com/vi/${v.id}/default.jpg'">
+      <div class="pl-info">
+        <div class="pl-title">${titleHtml}</div>
+        <div class="pl-artist">${artistHtml}</div>
+      </div>
+      <div class="pl-duration">${v.duration ? dur : '<span style="opacity:0.4;">--:--</span>'}</div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = prefixHtml + `<div class="playlist-list">${items}</div>`;
+}
+
+function selectVideo(i) {
+  activeVideoIndex = i;
+  const v = playlistVideos[i];
+  if (v?.id) {
+    // URLをその動画に更新
+    const current = document.getElementById('ytUrl').value;
+    try {
+      const u = new URL(current);
+      const list = u.searchParams.get('list');
+      let newUrl = `https://www.youtube.com/watch?v=${v.id}`;
+      if (list) newUrl += `&list=${list}`;
+      document.getElementById('ytUrl').value = newUrl;
+      generateCommand();
+    } catch {}
+  }
+  renderPlaylist();
+}
+
+function formatDuration(sec) {
+  if (!sec || isNaN(sec)) return '--:--';
+  const s = Math.floor(sec);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}:${String(m % 60).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+  return `${m}:${String(s % 60).padStart(2,'0')}`;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 let embedVisible = true;
@@ -1388,6 +1660,5 @@ function toggleEmbed() {
 updateYtStatus();
 generateCommand();
 </script>
-
 </body>
 </html>
