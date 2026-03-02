@@ -868,6 +868,26 @@
     margin-bottom: 3px;
   }
 
+  .playlist-item.downloaded {
+    background: rgba(0, 229, 160, 0.04);
+  }
+
+  .pl-downloaded-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(0, 229, 160, 0.12);
+    border: 1px solid rgba(0, 229, 160, 0.25);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-top: 4px;
+    letter-spacing: 0.03em;
+  }
+
   .playlist-item.active .pl-title { color: var(--accent); }
 
   .pl-artist {
@@ -947,7 +967,7 @@
       <div class="mini-logo">🎵</div>
       <div>
         <h1>YT-DLP Downloader</h1>
-        <div style="font-size:10px; color:var(--muted); font-family:'Space Mono',monospace; margin-top:2px;">v1.6.1</div>
+        <div style="font-size:10px; color:var(--muted); font-family:'Space Mono',monospace; margin-top:2px;">v1.6.2</div>
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:10px;">
@@ -1701,13 +1721,21 @@ async function loadPlaylist() {
   } catch {}
 
   if (serverAvailable) {
-    // ===== サーバーあり: yt-dlpで完全な情報を取得 =====
+    // ===== サーバーあり: yt-dlpで完全な情報を取得 + archiveも並行取得 =====
     const params = new URLSearchParams({
       url,
       method: cookieMethod,
       browser: selectedBrowser,
       cookiefile: document.getElementById('cookies')?.value?.trim() || ''
     });
+
+    // archive.txt を並行取得（失敗しても続行）
+    if (!archiveVideoIds.length) {
+      fetch(`${SERVER}/api/archive?path=archive.txt`, { signal: AbortSignal.timeout(3000) })
+        .then(r => r.json())
+        .then(d => { if (d.ok) archiveVideoIds = d.video_ids; })
+        .catch(() => {});
+    }
 
     try {
       const res = await fetch(`${SERVER}/api/playlist-info?${params}`, { signal: AbortSignal.timeout(35000) });
@@ -1721,6 +1749,8 @@ async function loadPlaylist() {
 
       playlistVideos = data.videos;
       countEl.textContent = `${data.count} 曲`;
+      // archiveの取得を少し待ってからrender（並行取得のため）
+      await new Promise(r => setTimeout(r, 300));
       renderPlaylist('full');
 
     } catch (e) {
@@ -1890,30 +1920,46 @@ function renderPlaylist(mode = 'full', prefixHtml = '') {
     return;
   }
 
+  const downloadedSet = new Set(archiveVideoIds);
+
   const items = playlistVideos.map((v, i) => {
     const dur = formatDuration(v.duration);
     const isActive = i === activeVideoIndex;
+    const isDownloaded = downloadedSet.has(v.id);
     const titleHtml = v.title
       ? escapeHtml(v.title)
       : `<span style="color:var(--muted);font-style:italic;">タイトル不明（server.py で取得可能）</span>`;
     const artistHtml = v.uploader
       ? escapeHtml(v.uploader)
       : `<span style="opacity:0.4;">— server.py で取得可能</span>`;
+    const downloadedBadge = isDownloaded
+      ? `<span class="pl-downloaded-badge">✓ DL済み</span>`
+      : '';
 
     return `
-    <div class="playlist-item ${isActive ? 'active' : ''}" onclick="selectVideo(${i})">
+    <div class="playlist-item ${isActive ? 'active' : ''} ${isDownloaded ? 'downloaded' : ''}" onclick="selectVideo(${i})">
       <div class="pl-index">${i + 1}</div>
       <img class="pl-thumb" src="${v.thumbnail}" alt="" loading="lazy"
         onerror="this.src='https://i.ytimg.com/vi/${v.id}/default.jpg'">
       <div class="pl-info">
         <div class="pl-title">${titleHtml}</div>
         <div class="pl-artist">${artistHtml}</div>
+        ${downloadedBadge}
       </div>
       <div class="pl-duration">${v.duration ? dur : '<span style="opacity:0.4;">--:--</span>'}</div>
     </div>`;
   }).join('');
 
-  container.innerHTML = prefixHtml + `<div class="playlist-list">${items}</div>`;
+  // ダウンロード済み件数をカウント表示
+  const dlCount = playlistVideos.filter(v => downloadedSet.has(v.id)).length;
+  const dlSummary = dlCount > 0
+    ? `<div style="padding:8px 20px;background:rgba(0,229,160,0.06);border-bottom:1px solid rgba(0,229,160,0.12);
+        font-size:11px;color:var(--accent);font-family:'Space Mono',monospace;">
+        ✓ ${dlCount} 曲がダウンロード済み / ${playlistVideos.length} 曲中
+      </div>`
+    : '';
+
+  container.innerHTML = prefixHtml + dlSummary + `<div class="playlist-list">${items}</div>`;
 }
 
 function selectVideo(i) {
