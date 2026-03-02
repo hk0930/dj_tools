@@ -849,6 +849,41 @@
     border-top: 1px solid var(--border);
   }
 
+  /* ===== ARCHIVE UPLOAD ===== */
+  .archive-upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 28px;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    text-align: center;
+  }
+  .archive-upload-area:hover,
+  .archive-upload-area.drag-over {
+    border-color: var(--accent2);
+    background: rgba(124,58,237,0.06);
+  }
+  .archive-upload-area.loaded {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.05);
+  }
+  .archive-upload-icon { font-size: 28px; }
+  .archive-upload-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .archive-upload-sub {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+  }
+
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 </style>
@@ -863,7 +898,7 @@
       <div class="mini-logo">🎵</div>
       <div>
         <h1>YT-DLP Downloader</h1>
-        <div style="font-size:10px; color:var(--muted); font-family:'Space Mono',monospace; margin-top:2px;">v1.3.2</div>
+        <div style="font-size:10px; color:var(--muted); font-family:'Space Mono',monospace; margin-top:2px;">v1.5.0</div>
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:10px;">
@@ -879,6 +914,7 @@
   <div class="tabs">
     <div class="tab active" onclick="switchTab('download')">ダウンロード</div>
     <div class="tab" onclick="switchTab('command')">コマンド確認</div>
+    <div class="tab" onclick="switchTab('history')">📥 ダウンロード履歴</div>
   </div>
 
   <!-- DOWNLOAD TAB -->
@@ -1132,6 +1168,88 @@
     </div>
   </div>
 
+  <!-- HISTORY TAB -->
+  <div class="tab-content" id="tab-history">
+
+    <!-- Status / upload card -->
+    <div class="card" id="historySourceCard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="card-title" style="margin:0;">📥 ダウンロード履歴</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span id="historySourceBadge" style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted);"></span>
+          <button id="historyReloadBtn" onclick="initHistoryTab()" style="
+            background:none;border:1px solid var(--border);border-radius:7px;
+            padding:5px 12px;color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;
+            cursor:pointer;transition:color 0.2s,border-color 0.2s;"
+            onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'"
+            onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">↺ 再読み込み</button>
+        </div>
+      </div>
+
+      <!-- archive path input (server mode) -->
+      <div id="historyServerSection" style="display:none;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="archivePathInput" type="text" value="archive.txt"
+            placeholder="archive.txt のパス"
+            style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+                   padding:8px 12px;color:var(--text);font-size:12px;font-family:'Space Mono',monospace;outline:none;
+                   transition:border-color 0.2s;"
+            onfocus="this.style.borderColor='var(--accent2)'" onblur="this.style.borderColor='var(--border)'">
+          <button onclick="loadArchiveFromServer()" style="
+            background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:7px;
+            padding:8px 16px;color:#fff;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;
+            cursor:pointer;transition:opacity 0.2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            読み込む
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:8px;">
+          💡 server.py と同じディレクトリの archive.txt を自動検出します
+        </div>
+      </div>
+
+      <!-- file upload (fallback) -->
+      <div id="historyUploadSection" style="display:none;">
+        <label class="archive-upload-area" id="archiveUploadArea" for="archiveFileInput">
+          <div class="archive-upload-icon">📂</div>
+          <div class="archive-upload-text">archive.txt をドロップ または クリックして選択</div>
+          <div class="archive-upload-sub" id="archiveFileName">対応形式: .txt</div>
+        </label>
+        <input type="file" id="archiveFileInput" accept=".txt" style="display:none;" onchange="handleArchiveFile(this)">
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center;">
+          <span id="archiveCount" style="font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;flex:1;"></span>
+          <button id="archiveLoadBtn" onclick="loadArchiveHistory()" style="display:none;
+            background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:7px;
+            padding:7px 16px;color:#fff;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;
+            transition:opacity 0.2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            動画情報を取得
+          </button>
+          <button id="archiveClearBtn" onclick="clearArchive()" style="display:none;
+            background:none;border:1px solid var(--border);border-radius:7px;
+            padding:7px 14px;color:var(--muted);font-size:12px;font-family:'Space Mono',monospace;cursor:pointer;">
+            クリア
+          </button>
+        </div>
+      </div>
+
+      <!-- loading state -->
+      <div id="historyInitLoading" class="pl-loading" style="border-top:none;padding:20px 0 4px;">
+        <span class="spinning">⟳</span> server.py に接続中...
+      </div>
+    </div>
+
+    <!-- History list -->
+    <div class="card" style="padding:0;overflow:hidden;display:none;" id="historyListCard">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 14px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-title" style="margin:0;">🎵 ダウンロード済み動画</div>
+          <span id="historyCount" style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;"></span>
+        </div>
+      </div>
+      <div id="historyContainer"></div>
+    </div>
+
+  </div>
+
   <!-- COMMAND TAB -->
   <div class="tab-content" id="tab-command">
     <div class="card">
@@ -1162,10 +1280,12 @@
 <script>
 // ===== TABS =====
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['download','command'][i] === name));
+  const tabs = ['download','command','history'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   if (name === 'command') generateCommand();
+  if (name === 'history') initHistoryTab();
 }
 
 // ===== TOGGLES =====
@@ -1740,6 +1860,209 @@ function toggleEmbed() {
   embedVisible = !embedVisible;
   document.getElementById('embedContainer').style.display = embedVisible ? 'block' : 'none';
   document.getElementById('embedToggleBtn').textContent = embedVisible ? '非表示' : '表示';
+}
+
+// ===== DOWNLOAD HISTORY =====
+let archiveVideoIds = [];
+let historyInitialized = false;
+
+async function initHistoryTab() {
+  // すでに一覧表示済みならスキップ
+  if (document.getElementById('historyListCard').style.display === 'block' && historyInitialized) return;
+
+  const loading = document.getElementById('historyInitLoading');
+  const serverSection = document.getElementById('historyServerSection');
+  const uploadSection = document.getElementById('historyUploadSection');
+  const badge = document.getElementById('historySourceBadge');
+
+  // UIリセット
+  loading.style.display = 'flex';
+  serverSection.style.display = 'none';
+  uploadSection.style.display = 'none';
+
+  // server.py 接続確認
+  let serverAvailable = false;
+  try {
+    const res = await fetch(`${SERVER}/api/check-ytdlp`, { signal: AbortSignal.timeout(2000) });
+    const data = await res.json();
+    serverAvailable = data.ok;
+  } catch {}
+
+  loading.style.display = 'none';
+
+  if (serverAvailable) {
+    // ===== server.py あり: 自動でarchive.txtを読み込む =====
+    badge.textContent = '🟢 server.py 接続中';
+    badge.style.color = 'var(--accent)';
+    serverSection.style.display = 'block';
+    await loadArchiveFromServer();
+  } else {
+    // ===== server.py なし: アップロードUIを表示 =====
+    badge.textContent = '⚠️ server.py 未起動';
+    badge.style.color = 'var(--warning)';
+    uploadSection.style.display = 'block';
+  }
+}
+
+async function loadArchiveFromServer() {
+  const path = document.getElementById('archivePathInput')?.value?.trim() || 'archive.txt';
+  const container = document.getElementById('historyContainer');
+  const countEl = document.getElementById('historyCount');
+  const listCard = document.getElementById('historyListCard');
+
+  listCard.style.display = 'block';
+  container.innerHTML = '<div class="pl-loading"><span class="spinning">⟳</span> archive.txt を読み込み中...</div>';
+  countEl.textContent = '';
+
+  try {
+    const res = await fetch(`${SERVER}/api/archive?path=${encodeURIComponent(path)}`, { signal: AbortSignal.timeout(5000) });
+    const data = await res.json();
+
+    if (!data.ok) {
+      container.innerHTML = `<div style="padding:20px;color:var(--warning);font-size:13px;font-family:'Space Mono',monospace;">
+        ⚠️ ${escapeHtml(data.error)}<br>
+        <span style="opacity:0.6;font-size:11px;">archive.txtのパスを確認してください</span>
+      </div>`;
+      return;
+    }
+
+    archiveVideoIds = data.video_ids;
+    historyInitialized = true;
+    await fetchAndRenderHistory(archiveVideoIds, countEl, container);
+
+  } catch (e) {
+    container.innerHTML = `<div style="padding:20px;color:#ff8888;font-size:13px;font-family:'Space Mono',monospace;">
+      ❌ 接続エラー: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// ドラッグ&ドロップ（アップロードモード用）
+document.addEventListener('DOMContentLoaded', () => {
+  const uploadArea = document.getElementById('archiveUploadArea');
+  if (!uploadArea) return;
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) processArchiveFile(file);
+  });
+});
+
+function handleArchiveFile(input) {
+  const file = input.files[0];
+  if (file) processArchiveFile(file);
+}
+
+function processArchiveFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split('\n');
+    archiveVideoIds = lines
+      .map(l => l.trim())
+      .filter(l => l.startsWith('youtube '))
+      .map(l => l.split(' ')[1])
+      .filter(Boolean);
+
+    document.getElementById('archiveUploadArea').classList.add('loaded');
+    document.getElementById('archiveFileName').textContent = `✅ ${file.name} — ${archiveVideoIds.length} 件のIDを検出`;
+    document.getElementById('archiveCount').textContent = `${archiveVideoIds.length} 動画`;
+    document.getElementById('archiveLoadBtn').style.display = archiveVideoIds.length ? 'block' : 'none';
+    document.getElementById('archiveClearBtn').style.display = 'block';
+    document.getElementById('historyListCard').style.display = 'block';
+  };
+  reader.readAsText(file);
+}
+
+async function loadArchiveHistory() {
+  if (!archiveVideoIds.length) return;
+  const btn = document.getElementById('archiveLoadBtn');
+  const container = document.getElementById('historyContainer');
+  const countEl = document.getElementById('historyCount');
+  btn.textContent = '取得中...';
+  btn.disabled = true;
+  await fetchAndRenderHistory(archiveVideoIds, countEl, container);
+  btn.textContent = '動画情報を取得';
+  btn.disabled = false;
+  historyInitialized = true;
+}
+
+// YouTube Data API で動画情報を取得してレンダリング（server/upload共通）
+async function fetchAndRenderHistory(videoIds, countEl, container) {
+  const API_KEY = 'AIzaSyCTTw19bVJrExKuU6rBE9evSngZRbwi1rM';
+  container.innerHTML = '<div class="pl-loading"><span class="spinning">⟳</span> 動画情報を取得中...</div>';
+
+  try {
+    const videos = [];
+    for (let i = 0; i < videoIds.length; i += 50) {
+      const chunk = videoIds.slice(i, i + 50);
+      const params = new URLSearchParams({ part: 'snippet,contentDetails', id: chunk.join(','), key: API_KEY });
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?${params}`, { signal: AbortSignal.timeout(10000) });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+
+      for (const item of (data.items || [])) {
+        const s = item.snippet || {};
+        videos.push({
+          id: item.id,
+          title: s.title || '(タイトル不明)',
+          uploader: s.channelTitle || '—',
+          thumbnail: s.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${item.id}/mqdefault.jpg`,
+          duration: parseISO8601Duration(item.contentDetails?.duration),
+          publishedAt: s.publishedAt ? s.publishedAt.slice(0, 10) : null
+        });
+      }
+      countEl.textContent = `${videos.length} / ${videoIds.length} 件取得中...`;
+      await new Promise(r => setTimeout(r, 80));
+    }
+
+    countEl.textContent = `${videos.length} 件`;
+    renderHistoryList(videos, container);
+
+  } catch (e) {
+    container.innerHTML = `<div style="padding:20px;color:#ff8888;font-size:13px;font-family:'Space Mono',monospace;">
+      ❌ ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderHistoryList(videos, container) {
+  if (!videos.length) {
+    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">動画が見つかりませんでした</div>';
+    return;
+  }
+  const items = videos.map((v, i) => `
+    <div class="playlist-item" onclick="setUrlFromHistory('${v.id}')">
+      <div class="pl-index">${i + 1}</div>
+      <img class="pl-thumb" src="${v.thumbnail}" alt="" loading="lazy"
+        onerror="this.src='https://i.ytimg.com/vi/${v.id}/default.jpg'">
+      <div class="pl-info">
+        <div class="pl-title">${escapeHtml(v.title)}</div>
+        <div class="pl-artist">${escapeHtml(v.uploader)}${v.publishedAt ? ` · ${v.publishedAt}` : ''}</div>
+      </div>
+      <div class="pl-duration">${v.duration ? formatDuration(v.duration) : '--:--'}</div>
+    </div>`).join('');
+  container.innerHTML = `<div class="playlist-list">${items}</div>`;
+}
+
+function setUrlFromHistory(videoId) {
+  document.getElementById('ytUrl').value = `https://www.youtube.com/watch?v=${videoId}`;
+  generateCommand();
+  switchTab('download');
+}
+
+function clearArchive() {
+  archiveVideoIds = [];
+  historyInitialized = false;
+  document.getElementById('archiveFileInput').value = '';
+  document.getElementById('archiveUploadArea').classList.remove('loaded');
+  document.getElementById('archiveFileName').textContent = '対応形式: .txt';
+  document.getElementById('archiveCount').textContent = '';
+  document.getElementById('archiveLoadBtn').style.display = 'none';
+  document.getElementById('archiveClearBtn').style.display = 'none';
+  document.getElementById('historyListCard').style.display = 'none';
+  document.getElementById('historyContainer').innerHTML = '';
+  document.getElementById('historyCount').textContent = '';
 }
 
 // 初期化
