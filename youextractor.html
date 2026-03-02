@@ -863,7 +863,7 @@
       <div class="mini-logo">🎵</div>
       <div>
         <h1>YT-DLP Downloader</h1>
-        <div style="font-size:10px; color:var(--muted); font-family:'Space Mono',monospace; margin-top:2px;">v1.1.0</div>
+        <div style="font-size:10px; color:var(--muted); font-family:'Space Mono',monospace; margin-top:2px;">v1.3.2</div>
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:10px;">
@@ -917,7 +917,7 @@
         <div id="playlistContainer">
           <div id="playlistEmpty" style="text-align:center;padding:36px 20px;color:var(--muted);font-size:13px;font-family:'Space Mono',monospace;">
             「読み込む」を押してプレイリストを表示<br>
-            <span style="font-size:11px;opacity:0.6;">※ server.py の起動が必要です</span>
+            <span style="font-size:11px;opacity:0.6;">APIキーあり or server.py 起動中で全曲・全情報を表示</span>
           </div>
         </div>
       </div>
@@ -1386,13 +1386,29 @@ const browserLabels = {
   edge: 'Edge', brave: 'Brave', opera: 'Opera'
 };
 
+// 使用中のブラウザを userAgent から検出
+function detectCurrentBrowser() {
+  const ua = navigator.userAgent;
+  const brands = navigator.userAgentData?.brands?.map(b => b.brand) || [];
+
+  if (brands.some(b => /Brave/i.test(b)) || navigator.brave) return 'Brave';
+  if (/OPR\/|Opera/i.test(ua)) return 'Opera';
+  if (/Edg\//i.test(ua)) return 'Edge';
+  if (/Firefox/i.test(ua)) return 'Firefox';
+  if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
+  if (/Chrome/i.test(ua)) return 'Chrome';
+  return null;
+}
+
 function updateYtStatus() {
   const badge = document.getElementById('ytStatusBadge');
   const text = document.getElementById('ytStatusText');
+  const detectedBrowser = detectCurrentBrowser();
 
   if (cookieMethod === 'browser') {
     badge.classList.add('logged-in');
-    text.textContent = `YouTube: ${browserLabels[selectedBrowser]} のアカウントを使用`;
+    const displayName = detectedBrowser || browserLabels[selectedBrowser] || 'ブラウザ';
+    text.textContent = `YouTube: ${displayName} のアカウントを使用`;
   } else if (cookieMethod === 'file') {
     badge.classList.add('logged-in');
     text.textContent = 'YouTube: cookies.txt でログイン';
@@ -1510,7 +1526,6 @@ async function loadPlaylist() {
 }
 
 async function loadWithoutServer(url, container, countEl) {
-  // URLからlist IDとvideo IDを抽出
   let listId = null, firstVideoId = null;
   try {
     const u = new URL(url);
@@ -1520,13 +1535,33 @@ async function loadWithoutServer(url, container, countEl) {
 
   if (!listId && !firstVideoId) {
     container.innerHTML = `<div style="padding:24px 20px;color:var(--muted);font-size:13px;font-family:'Space Mono',monospace;border-top:1px solid var(--border);">
-      ⚠️ プレイリストIDが見つかりません<br>
-      <span style="font-size:11px;opacity:0.6;">server.py を起動するとタイトル・アーティスト名も取得できます</span>
-    </div>`;
+      ⚠️ プレイリストIDが見つかりません</div>`;
     return;
   }
 
-  // oEmbedで最低限の情報（タイトル・チャンネル名）を取得
+  const apiKey = document.getElementById('ytApiKey')?.value.trim() || 'AIzaSyCTTw19bVJrExKuU6rBE9evSngZRbwi1rM';
+
+  // ===== YouTube Data API で全曲取得 =====
+  if (apiKey && listId) {
+    container.innerHTML = '<div class="pl-loading"><span class="spinning">⟳</span> YouTube Data API で全曲取得中...</div>';
+    try {
+      const videos = await fetchAllPlaylistItems(listId, apiKey, countEl);
+      playlistVideos = videos;
+      countEl.textContent = `${videos.length} 曲`;
+      renderPlaylist('full');
+      return;
+    } catch (e) {
+      const errMsg = e.message || 'APIエラー';
+      container.innerHTML = `<div style="padding:12px 20px;background:rgba(255,68,68,0.08);border-bottom:1px solid rgba(255,68,68,0.2);
+        font-size:12px;color:#ff8888;font-family:'Space Mono',monospace;">
+        ❌ ${escapeHtml(errMsg)}<br>
+        <span style="opacity:0.7;font-size:11px;">APIキーを確認するか server.py を起動してください</span>
+      </div>`;
+      return;
+    }
+  }
+
+  // ===== フォールバック: oEmbed で先頭1曲のみ =====
   let oembedInfo = null;
   if (firstVideoId) {
     try {
@@ -1538,37 +1573,12 @@ async function loadWithoutServer(url, container, countEl) {
     } catch {}
   }
 
-  // サムネイルCDNから取得できる動画をリストとして1件表示（プレイリスト全体は取得不可）
-  // ただしリストIDがあれば最大5件分のサムネイルを推測表示
-  if (listId) {
-    // プレイリストIDはあるが個別動画IDは不明のため、取得できた動画だけ表示
-    const videos = firstVideoId ? [{
-      id: firstVideoId,
-      title: oembedInfo?.title || null,
-      uploader: oembedInfo?.author_name || null,
-      thumbnail: `https://i.ytimg.com/vi/${firstVideoId}/mqdefault.jpg`,
-      duration: null
-    }] : [];
+  const notice = `<div style="padding:8px 20px;background:rgba(255,170,0,0.08);border-bottom:1px solid rgba(255,170,0,0.15);
+    font-size:11px;color:var(--warning);font-family:'Space Mono',monospace;">
+    ⚠️ APIキー未入力・server.py 未起動 — 先頭1曲のみ表示
+  </div>`;
 
-    playlistVideos = videos;
-    countEl.textContent = videos.length > 0 ? `1 曲（部分取得）` : '';
-
-    const notice = `
-      <div style="padding:8px 20px;background:rgba(255,170,0,0.08);border-bottom:1px solid rgba(255,170,0,0.15);
-                  font-size:11px;color:var(--warning);font-family:'Space Mono',monospace;display:flex;align-items:center;gap:8px;">
-        ⚠️ server.py 未起動 — サムネイル・取得可能な情報のみ表示中
-      </div>`;
-
-    if (videos.length === 0) {
-      container.innerHTML = notice + `<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">
-        プレイリストの動画情報を取得できませんでした<br>
-        <span style="font-size:11px;font-family:'Space Mono',monospace;opacity:0.6;">python3 server.py を起動してください</span>
-      </div>`;
-    } else {
-      renderPlaylist('partial', notice);
-    }
-  } else if (firstVideoId) {
-    // 単体動画
+  if (firstVideoId) {
     playlistVideos = [{
       id: firstVideoId,
       title: oembedInfo?.title || null,
@@ -1577,12 +1587,88 @@ async function loadWithoutServer(url, container, countEl) {
       duration: null
     }];
     countEl.textContent = '1 曲（部分取得）';
-    const notice = `<div style="padding:8px 20px;background:rgba(255,170,0,0.08);border-bottom:1px solid rgba(255,170,0,0.15);
-                font-size:11px;color:var(--warning);font-family:'Space Mono',monospace;">
-      ⚠️ server.py 未起動 — サムネイル・取得可能な情報のみ表示中
-    </div>`;
     renderPlaylist('partial', notice);
+  } else {
+    container.innerHTML = notice + `<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">
+      先頭動画のURLが取得できませんでした</div>`;
   }
+}
+
+// YouTube Data API: PlaylistItems 全ページ取得 → Videos API で再生時間も取得
+async function fetchAllPlaylistItems(listId, apiKey, countEl) {
+  const videos = [];
+  let pageToken = '';
+
+  // Step 1: PlaylistItems で全動画ID・タイトル・サムネイル・チャンネル名を取得
+  while (true) {
+    const params = new URLSearchParams({
+      part: 'snippet',
+      playlistId: listId,
+      maxResults: 50,
+      key: apiKey,
+      ...(pageToken ? { pageToken } : {})
+    });
+
+    const res = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?${params}`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error.message);
+
+    for (const item of (data.items || [])) {
+      const s = item.snippet || {};
+      const vidId = s.resourceId?.videoId;
+      if (!vidId) continue;
+      // 非公開・削除済み動画をスキップ
+      if (s.title === 'Deleted video' || s.title === 'Private video') continue;
+      videos.push({
+        id: vidId,
+        title: s.title || null,
+        uploader: s.videoOwnerChannelTitle || null,
+        thumbnail: s.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${vidId}/mqdefault.jpg`,
+        duration: null
+      });
+    }
+
+    if (countEl) countEl.textContent = `${videos.length} 曲 取得中...`;
+    pageToken = data.nextPageToken || '';
+    if (!pageToken) break;
+    await new Promise(r => setTimeout(r, 80));
+  }
+
+  // Step 2: Videos API で再生時間（duration）を50件ずつ取得
+  for (let i = 0; i < videos.length; i += 50) {
+    const chunk = videos.slice(i, i + 50);
+    const ids = chunk.map(v => v.id).join(',');
+    const params = new URLSearchParams({ part: 'contentDetails', id: ids, key: apiKey });
+
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?${params}`,
+        { signal: AbortSignal.timeout(10000) }
+      );
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+
+      for (const item of (data.items || [])) {
+        const vid = videos.find(v => v.id === item.id);
+        if (vid) vid.duration = parseISO8601Duration(item.contentDetails?.duration);
+      }
+    } catch {}
+    await new Promise(r => setTimeout(r, 80));
+  }
+
+  return videos;
+}
+
+// ISO 8601 duration (PT4M13S) → 秒数
+function parseISO8601Duration(str) {
+  if (!str) return null;
+  const m = str.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!m) return null;
+  return (parseInt(m[1] || 0) * 3600) + (parseInt(m[2] || 0) * 60) + parseInt(m[3] || 0);
 }
 
 function renderPlaylist(mode = 'full', prefixHtml = '') {
